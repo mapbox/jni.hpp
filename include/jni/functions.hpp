@@ -1,0 +1,608 @@
+#pragma once
+
+#include <jni/types.hpp>
+#include <jni/errors.hpp>
+#include <jni/wrapping.hpp>
+#include <jni/ownership.hpp>
+#include <jni/typed_methods.hpp>
+#include <jni/arraylike.hpp>
+
+#include <type_traits>
+
+namespace jni
+   {
+    inline jint GetVersion(JNIEnv& env)
+       {
+        return env.GetVersion();
+       }
+
+
+    inline jclass& DefineClass(JNIEnv& env, const char* name, jobject& loader, const jbyte* buf, jsize size)
+       {
+        return *CheckJavaException(env,
+            Wrap<jclass*>(env.DefineClass(name, Unwrap(loader), buf, Unwrap(size))));
+       }
+
+    template < class Array >
+    auto DefineClass(JNIEnv& env, const char* name, jobject& loader, const Array& buf)
+       -> typename std::enable_if< IsArraylike<Array>::value, jclass& >::type
+       {
+        return DefineClass(env, name, loader, ArraylikeData(buf), ArraylikeSize(buf));
+       }
+
+    inline jclass& FindClass(JNIEnv& env, const char* name)
+       {
+        return *CheckJavaException(env, Wrap<jclass*>(env.FindClass(name)));
+       }
+
+
+    inline jmethodID* FromReflectedMethod(JNIEnv& env, jobject* obj)
+       {
+        return CheckJavaException(env,
+            Wrap<jmethodID*>(env.FromReflectedMethod(Unwrap(obj))));
+       }
+
+    inline jfieldID* FromReflectedField(JNIEnv& env, jobject* obj)
+       {
+        return CheckJavaException(env,
+            Wrap<jfieldID*>(env.FromReflectedField(Unwrap(obj))));
+       }
+
+    inline jobject& ToReflectedMethod(JNIEnv& env, jclass& clazz, jmethodID& method, jboolean isStatic)
+       {
+        return *CheckJavaException(env,
+            Wrap<jobject*>(env.ToReflectedMethod(Unwrap(clazz), Unwrap(method), Unwrap(isStatic))));
+       }
+
+    inline jobject& ToReflectedField(JNIEnv& env, jclass& clazz, jfieldID& field, jboolean isStatic)
+       {
+        return *CheckJavaException(env,
+            Wrap<jobject*>(env.ToReflectedField(Unwrap(clazz), Unwrap(field), Unwrap(isStatic))));
+       }
+
+
+    inline jclass* GetSuperclass(JNIEnv& env, jclass& clazz)
+       {
+        return CheckJavaException(env,
+            Wrap<jclass*>(env.GetSuperclass(Unwrap(clazz))));
+       }
+
+    inline jboolean IsAssignableFrom(JNIEnv& env, jclass& clazz1, jclass& clazz2)
+       {
+        return CheckJavaException(env,
+            Wrap<jboolean>(env.IsAssignableFrom(Unwrap(clazz1), Unwrap(clazz2))));
+       }
+
+
+    [[noreturn]] inline void Throw(JNIEnv& env, jthrowable& obj)
+       {
+        CheckErrorCode(env.Throw(Unwrap(obj)));
+        throw PendingJavaException();
+       }
+
+    [[noreturn]] inline void ThrowNew(JNIEnv& env, jclass& clazz, const char* msg)
+       {
+        CheckErrorCode(env.ThrowNew(Unwrap(clazz), msg));
+        throw PendingJavaException();
+       }
+
+    inline jboolean ExceptionCheck(JNIEnv& env)
+       {
+        return env.ExceptionCheck();
+       }
+
+    inline jthrowable* ExceptionOccurred(JNIEnv& env)
+       {
+        return Wrap<jthrowable*>(env.ExceptionOccurred());
+       }
+
+    inline void ExceptionDescribe(JNIEnv& env)
+       {
+        env.ExceptionDescribe();
+       }
+
+    inline void ExceptionClear(JNIEnv& env)
+       {
+        env.ExceptionClear();
+       }
+
+    [[noreturn]] inline void FatalError(JNIEnv& env, const char* msg)
+       {
+        env.FatalError(msg);
+        abort();
+       }
+
+
+    inline void PushLocalFrame(JNIEnv& env, jint capacity)
+       {
+        CheckJavaExceptionThenErrorCode(env, env.PushLocalFrame(capacity));
+       }
+
+    inline jobject* PopLocalFrame(JNIEnv& env, jobject* result = nullptr)
+       {
+        return CheckJavaException(env,
+            Wrap<jobject*>(env.PopLocalFrame(Unwrap(result))));
+       }
+
+
+    template < class T >
+    UniqueGlobalRef<T> NewGlobalRef(JNIEnv& env, T& t)
+       {
+        jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t)));
+        CheckJavaException(env);
+        if (!obj)
+            throw std::bad_alloc();
+        return UniqueGlobalRef<T>(reinterpret_cast<T*>(obj), GlobalRefDeleter(env));
+       }
+
+    inline void DeleteGlobalRef(JNIEnv& env, UniqueGlobalRef<jobject>&& ref)
+       {
+        env.DeleteGlobalRef(Unwrap(ref.release()));
+       }
+
+
+    template < class T >
+    T* NewLocalRef(JNIEnv& env, T* ref)
+       {
+        return CheckJavaException(env, Wrap<T*>(env.NewLocalRef(Unwrap(ref))));
+       }
+
+    inline void DeleteLocalRef(JNIEnv& env, jobject* localRef)
+       {
+        env.DeleteLocalRef(Unwrap(localRef));
+        CheckJavaException(env);
+       }
+
+    inline void EnsureLocalCapacity(JNIEnv& env, jint capacity)
+       {
+        CheckJavaExceptionThenErrorCode(env, env.EnsureLocalCapacity(capacity));
+       }
+
+    template < class T >
+    UniqueWeakGlobalRef<T> NewWeakGlobalRef(JNIEnv& env, T& t)
+       {
+        T* result = Wrap<T*>(env.NewWeakGlobalRef(Unwrap(t)));
+        CheckJavaException(env);
+        if (!result)
+            throw std::bad_alloc();
+        return UniqueWeakGlobalRef<T>(result, WeakGlobalRefDeleter(env));
+       }
+
+    inline void DeleteWeakGlobalRef(JNIEnv& env, UniqueWeakGlobalRef<jobject>&& ref)
+       {
+        env.DeleteWeakGlobalRef(Unwrap(ref.release()));
+       }
+
+
+    inline jboolean IsSameObject(JNIEnv& env, jobject* ref1, jobject* ref2)
+       {
+        return CheckJavaException(env,
+            Wrap<jboolean>(env.IsSameObject(Unwrap(ref1), Unwrap(ref2))));
+       }
+
+    inline jobject& AllocObject(JNIEnv& env, jclass& clazz)
+       {
+        return *CheckJavaException(env,
+            Wrap<jobject*>(env.AllocObject(Unwrap(clazz))));
+       }
+
+    template < class... Args >
+    jobject& NewObject(JNIEnv& env, jclass& clazz, jmethodID& method, Args&&... args)
+       {
+        return *CheckJavaException(env,
+            Wrap<jobject*>(env.NewObject(Unwrap(clazz), Unwrap(method), Unwrap(std::forward<Args>(args))...)));
+       }
+
+    inline jclass& GetObjectClass(JNIEnv& env, jobject& obj)
+       {
+        return *CheckJavaException(env,
+            Wrap<jclass*>(env.GetObjectClass(Unwrap(obj))));
+       }
+
+    inline jboolean IsInstanceOf(JNIEnv& env, jobject* obj, jclass& clazz)
+       {
+        return CheckJavaException(env,
+            Wrap<jboolean>(env.IsInstanceOf(Unwrap(obj), Unwrap(clazz))));
+       }
+
+
+    inline jmethodID& GetMethodID(JNIEnv& env, jclass& clazz, const char* name, const char* sig)
+       {
+        return *CheckJavaException(env,
+            Wrap<jmethodID*>(env.GetMethodID(Unwrap(clazz), name, sig)));
+       }
+
+    template < class R, class... Args >
+    std::enable_if_t<!std::is_void<R>::value, R>
+    CallMethod(JNIEnv& env, jobject* obj, jmethodID& method, Args&&... args)
+       {
+        return CheckJavaException(env,
+            Wrap<R>((env.*(TypedMethods<R>::CallMethod))(Unwrap(obj), Unwrap(method), Unwrap(std::forward<Args>(args))...)));
+       }
+
+    template < class R, class... Args >
+    std::enable_if_t<std::is_void<R>::value, R>
+    CallMethod(JNIEnv& env, jobject* obj, jmethodID& method, Args&&... args)
+       {
+        env.CallVoidMethod(Unwrap(obj), Unwrap(method), Unwrap(std::forward<Args>(args))...);
+        CheckJavaException(env);
+       }
+
+    template < class R, class... Args >
+    std::enable_if_t<!std::is_void<R>::value, R>
+    CallNonvirtualMethod(JNIEnv& env, jobject* obj, jclass& clazz, jmethodID& method, Args&&... args)
+       {
+        return CheckJavaException(env,
+            Wrap<R>((env.*(TypedMethods<R>::CallNonvirtualMethod))(Unwrap(obj), Unwrap(clazz), Unwrap(method), Unwrap(std::forward<Args>(args))...)));
+       }
+
+    template < class R, class... Args >
+    std::enable_if_t<std::is_void<R>::value, R>
+    CallNonvirtualMethod(JNIEnv& env, jobject* obj, jclass& clazz, jmethodID& method, Args&&... args)
+       {
+        env.CallNonvirtualVoidMethod(Unwrap(obj), Unwrap(clazz), Unwrap(method), Unwrap(std::forward<Args>(args))...);
+        CheckJavaException(env);
+       }
+
+
+    inline jfieldID& GetFieldID(JNIEnv& env, jclass& clazz, const char* name, const char* sig)
+       {
+        return *CheckJavaException(env,
+            Wrap<jfieldID*>(env.GetFieldID(Unwrap(clazz), name, sig)));
+       }
+
+    template < class T >
+    T GetField(JNIEnv& env, jobject* obj, jfieldID& field)
+       {
+        return CheckJavaException(env,
+            Wrap<T>((env.*(TypedMethods<T>::GetField))(Unwrap(obj), Unwrap(field))));
+       }
+
+    template < class T >
+    void SetField(JNIEnv& env, jobject* obj, jfieldID& field, T&& value)
+       {
+        (env.*(TypedMethods<T>::SetField))(Unwrap(obj), Unwrap(field), Unwrap(std::forward<T>(value)));
+        CheckJavaException(env);
+       }
+
+
+    inline jmethodID& GetStaticMethodID(JNIEnv& env, jclass& clazz, const char* name, const char* sig)
+       {
+        return *CheckJavaException(env,
+            Wrap<jmethodID*>(env.GetStaticMethodID(Unwrap(clazz), name, sig)));
+       }
+
+    template < class R, class... Args >
+    std::enable_if_t<!std::is_void<R>::value, R>
+    CallStaticMethod(JNIEnv& env, jclass& clazz, jmethodID& method, Args&&... args)
+       {
+        return CheckJavaException(env,
+            Wrap<R>((env.*(TypedMethods<R>::CallStaticMethod))(Unwrap(clazz), Unwrap(method), Unwrap(std::forward<Args>(args))...)));
+       }
+
+    template < class R, class... Args >
+    std::enable_if_t<std::is_void<R>::value, R>
+    CallStaticMethod(JNIEnv& env, jclass& clazz, jmethodID& method, Args&&... args)
+       {
+        env.CallStaticVoidMethod(Unwrap(clazz), Unwrap(method), Unwrap(std::forward<Args>(args))...);
+        CheckJavaException(env);
+       }
+
+
+    inline jfieldID& GetStaticFieldID(JNIEnv& env, jclass& clazz, const char* name, const char* sig)
+       {
+        return *CheckJavaException(env,
+            Wrap<jfieldID*>(env.GetStaticFieldID(Unwrap(clazz), name, sig)));
+       }
+
+    template < class T >
+    T GetStaticField(JNIEnv& env, jclass& clazz, jfieldID& field)
+       {
+        return CheckJavaException(env,
+            Wrap<T>((env.*(TypedMethods<T>::GetStaticField))(Unwrap(clazz), Unwrap(field))));
+       }
+
+    template < class T >
+    void SetStaticField(JNIEnv& env, jclass& clazz, jfieldID& field, T&& value)
+       {
+        (env.*(TypedMethods<T>::SetStaticField))(Unwrap(clazz), Unwrap(field), Unwrap(std::forward<T>(value)));
+        CheckJavaException(env);
+       }
+
+
+    inline jstring& NewString(JNIEnv& env, const char16_t* chars, jsize len)
+       {
+        return *CheckJavaException(env,
+            Wrap<jstring*>(env.NewString(Unwrap(chars), Unwrap(len))));
+       }
+
+    template < class Array >
+    auto NewString(JNIEnv& env, const Array& chars)
+       -> typename std::enable_if< IsArraylike<Array>::value, jstring& >::type
+       {
+        return NewString(env, ArraylikeData(chars), ArraylikeSize(chars));
+       }
+
+    inline jsize GetStringLength(JNIEnv& env, jstring* string)
+       {
+        return CheckJavaException(env,
+            Wrap<jsize>(env.GetStringLength(Unwrap(string))));
+       }
+
+    inline std::tuple<UniqueStringChars, jboolean> GetStringChars(JNIEnv& env, jstring* string)
+       {
+        ::jboolean isCopy = JNI_FALSE;
+        const char16_t* result = CheckJavaException(env,
+            Wrap<const char16_t*>(env.GetStringChars(Unwrap(string), &isCopy)));
+        return std::make_tuple(UniqueStringChars(result, StringCharsDeleter(env, string)), Wrap<jboolean>(isCopy));
+       }
+
+    inline void ReleaseStringChars(JNIEnv& env, jstring* string, UniqueStringChars&& chars)
+       {
+        env.ReleaseStringChars(Unwrap(string), Unwrap(chars.release()));
+        CheckJavaException(env);
+       }
+
+    inline jstring& NewStringUTF(JNIEnv& env, const char* bytes)
+       {
+        return *CheckJavaException(env,
+            Wrap<jstring*>(env.NewStringUTF(bytes)));
+       }
+
+    inline jsize GetStringUTFLength(JNIEnv& env, jstring* string)
+       {
+        return CheckJavaException(env,
+            Wrap<jsize>(env.GetStringUTFLength(Unwrap(string))));
+       }
+
+    inline std::tuple<UniqueStringUTFChars, jboolean> GetStringUTFChars(JNIEnv& env, jstring* string)
+       {
+        ::jboolean isCopy = JNI_FALSE;
+        const char* result = CheckJavaException(env,
+            env.GetStringUTFChars(Unwrap(string), &isCopy));
+        return std::make_tuple(UniqueStringUTFChars(result, StringUTFCharsDeleter(env, string)), Wrap<jboolean>(isCopy));
+       }
+
+    inline void ReleaseStringUTFChars(JNIEnv& env, jstring* string, UniqueStringUTFChars&& chars)
+       {
+        env.ReleaseStringUTFChars(Unwrap(string), chars.release());
+        CheckJavaException(env);
+       }
+
+    inline void GetStringRegion(JNIEnv& env, jstring* string, jsize start, jsize len, char16_t* buf)
+       {
+        env.GetStringRegion(Unwrap(string), Unwrap(start), Unwrap(len), Unwrap(buf));
+        CheckJavaException(env);
+       }
+
+    template < class Array >
+    auto GetStringRegion(JNIEnv& env, jstring* string, jsize start, Array& buf)
+       -> typename std::enable_if< IsArraylike<Array>::value >::type
+       {
+        GetStringRegion(env, string, start, ArraylikeSize(buf), ArraylikeData(buf));
+       }
+
+    inline void GetStringUTFRegion(JNIEnv& env, jstring* string, jsize start, jsize len, char* buf)
+       {
+        env.GetStringUTFRegion(Unwrap(string), Unwrap(start), Unwrap(len), buf);
+        CheckJavaException(env);
+       }
+
+    template < class Array >
+    auto GetStringUTFRegion(JNIEnv& env, jstring* string, jsize start, Array& buf)
+       -> typename std::enable_if< IsArraylike<Array>::value >::type
+       {
+        GetStringUTFRegion(env, string, start, ArraylikeSize(buf), ArraylikeData(buf));
+       }
+
+    inline std::tuple<UniqueStringCritical, jboolean> GetStringCritical(JNIEnv& env, jstring* string)
+       {
+        ::jboolean isCopy = JNI_FALSE;
+        const char16_t* result = CheckJavaException(env,
+            Wrap<const char16_t*>(env.GetStringCritical(Unwrap(string), &isCopy)));
+        return std::make_tuple(UniqueStringCritical(result, StringCriticalDeleter(env, string)), Wrap<jboolean>(isCopy));
+       }
+
+    inline void ReleaseStringCritical(JNIEnv& env, jstring* string, UniqueStringCritical&& chars)
+       {
+        env.ReleaseStringCritical(Unwrap(string), Unwrap(chars.release()));
+        CheckJavaException(env);
+       }
+
+
+    template < class E >
+    jsize GetArrayLength(JNIEnv& env, jarray<E>* array)
+       {
+        return CheckJavaException(env,
+            Wrap<jsize>(env.GetArrayLength(Unwrap(array))));
+       }
+
+    template < class E >
+    jarray<E>& NewArray(JNIEnv& env, jsize length)
+       {
+        return *CheckJavaException(env,
+            Wrap<jarray<E>*>((env.*(TypedMethods<E>::NewArray))(Unwrap(length))));
+       }
+
+    template < class E >
+    std::tuple<UniqueArrayElements<E>, jboolean> GetArrayElements(JNIEnv& env, jarray<E>* array)
+       {
+        ::jboolean isCopy = JNI_FALSE;
+        const E** result = CheckJavaException(env,
+            (env.*(TypedMethods<E>::GetArrayElements))(Unwrap(array), &isCopy));
+        return std::make_tuple(UniqueArrayElements<E>(result, ArrayElementsDeleter<E>(env, array)), Wrap<jboolean>(isCopy));
+       }
+
+    template < class E >
+    void ReleaseArrayElements(JNIEnv& env, jarray<E>* array, E** elems)
+       {
+        (env.*(TypedMethods<E>::ReleaseArrayElements))(Unwrap(array), elems, JNI_COMMIT);
+        CheckJavaException(env);
+       }
+
+    template < class E >
+    void ReleaseArrayElements(JNIEnv& env, jarray<E>* array, UniqueArrayElements<E>&& elems)
+       {
+        (env.*(TypedMethods<E>::ReleaseArrayElements))(Unwrap(array), elems.release(), 0);
+        CheckJavaException(env);
+       }
+
+    template < class E >
+    std::tuple<UniquePrimitiveArrayCritical<E>, jboolean> GetPrimitiveArrayCritical(JNIEnv& env, jarray<E>* array)
+       {
+        ::jboolean isCopy = JNI_FALSE;
+        void* result = CheckJavaException(env,
+            env.GetPrimitiveArrayCritical(Unwrap(array), &isCopy));
+        return std::make_tuple(UniquePrimitiveArrayCritical<E>(result, PrimitiveArrayCriticalDeleter<E>(env, array)), Wrap<jboolean>(isCopy));
+       }
+
+    template < class E >
+    void ReleasePrimitiveArrayCritical(JNIEnv& env, jarray<E>* array, void* carray)
+       {
+        env.ReleasePrimitiveArrayCritical(Unwrap(array), carray, 0);
+        CheckJavaException(env);
+       }
+
+    template < class E >
+    void ReleasePrimitiveArrayCritical(JNIEnv& env, jarray<E>* array, UniquePrimitiveArrayCritical<E>&& carray)
+       {
+        env.ReleasePrimitiveArrayCritical(Unwrap(array), carray.release(), JNI_COMMIT);
+        CheckJavaException(env);
+       }
+
+    template < class T >
+    void GetArrayRegion(JNIEnv& env, jarray<T>* array, jsize start, jsize len, T* buf)
+       {
+        (env.*(TypedMethods<T>::GetArrayRegion))(Unwrap(array), Unwrap(start), Unwrap(len), buf);
+        CheckJavaException(env);
+       }
+
+    template < class T, class Array >
+    auto GetArrayRegion(JNIEnv& env, jarray<T>* array, jsize start, Array& buf)
+       -> typename std::enable_if< IsArraylike<Array>::value >::type
+       {
+        GetArrayRegion(env, array, start, ArraylikeSize(buf), ArraylikeData(buf));
+       }
+
+    template < class T >
+    void SetArrayRegion(JNIEnv& env, jarray<T>* array, jsize start, jsize len, const T* buf)
+       {
+        (env.*(TypedMethods<T>::SetArrayRegion))(Unwrap(array), Unwrap(start), Unwrap(len), buf);
+        CheckJavaException(env);
+       }
+
+    template < class T, class Array >
+    auto SetArrayRegion(JNIEnv& env, jarray<T>* array, jsize start, const Array& buf)
+       -> typename std::enable_if< IsArraylike<Array>::value >::type
+       {
+        SetArrayRegion(env, array, start, ArraylikeSize(buf), ArraylikeData(buf));
+       }
+
+
+    inline jarray<jobject>& NewObjectArray(JNIEnv& env, jsize length, jclass& elementClass, jobject* initialElement)
+       {
+        return *CheckJavaException(env,
+            Wrap<jarray<jobject>*>(env.NewObjectArray(Unwrap(length), Unwrap(elementClass), Unwrap(initialElement))));
+       }
+
+    inline jobject* GetObjectArrayElement(JNIEnv& env, jarray<jobject>* array, jsize index)
+       {
+        return CheckJavaException(env,
+            Wrap<jobject*>(env.GetObjectArrayElement(Unwrap(array), Unwrap(index))));
+       }
+
+    inline void SetObjectArrayElement(JNIEnv& env, jarray<jobject>* array, jsize index, jobject* value)
+       {
+        env.SetObjectArrayElement(Unwrap(array), Unwrap(index), Unwrap(value));
+        CheckJavaException(env);
+       }
+
+
+    inline void RegisterNatives(JNIEnv& env, jclass& clazz, const JNINativeMethod* methods, jsize nMethods)
+       {
+        CheckJavaExceptionThenErrorCode(env, env.RegisterNatives(Unwrap(clazz), methods, Unwrap(nMethods)));
+       }
+
+    inline void RegisterNatives(JNIEnv& env, jclass& clazz, std::initializer_list<JNINativeMethod> methods)
+       {
+        RegisterNatives(env, clazz, methods.begin(), methods.size());
+       }
+
+    template < class Array >
+    auto RegisterNatives(JNIEnv& env, jclass& clazz, const Array& methods)
+       -> typename std::enable_if<IsArraylike<Array>::value>::type
+       {
+        RegisterNatives(env, clazz, ArraylikeData(methods), ArraylikeSize(methods));
+       }
+
+    inline void UnregisterNatives(JNIEnv& env, jclass& clazz)
+       {
+        CheckJavaExceptionThenErrorCode(env, env.UnregisterNatives(Unwrap(clazz)));
+       }
+
+
+    inline UniqueMonitor MonitorEnter(JNIEnv& env, jobject* obj)
+       {
+        CheckJavaExceptionThenErrorCode(env, env.MonitorEnter(Unwrap(obj)));
+        return UniqueMonitor(obj, MonitorDeleter(env));
+       }
+
+    inline void MonitorExit(JNIEnv& env, UniqueMonitor&& monitor)
+       {
+        CheckJavaExceptionThenErrorCode(env, env.MonitorExit(Unwrap(monitor.release())));
+       }
+
+
+    inline JavaVM& GetJavaVM(JNIEnv& env)
+       {
+        JavaVM* result = nullptr;
+        CheckJavaExceptionThenErrorCode(env, env.GetJavaVM(&result));
+        return *result;
+       }
+
+
+    inline jobject& NewDirectByteBuffer(JNIEnv& env, void* address, jlong capacity)
+       {
+        return *CheckJavaException(env,
+            Wrap<jobject*>(env.NewDirectByteBuffer(address, Unwrap(capacity))));
+       }
+
+    inline void* GetDirectBufferAddress(JNIEnv& env, jobject& buf)
+       {
+        return CheckJavaException(env,
+            env.GetDirectBufferAddress(Unwrap(buf)));
+       }
+
+    inline jlong GetDirectBufferCapacity(JNIEnv& env, jobject& buf)
+       {
+        return CheckJavaException(env,
+            env.GetDirectBufferCapacity(Unwrap(buf)));
+       }
+
+
+    inline jobjectRefType GetObjectRefType(JNIEnv& env, jobject* obj)
+       {
+        return env.GetObjectRefType(Unwrap(obj));
+       }
+
+
+    inline UniqueEnv AttachCurrentThread(JavaVM& vm)
+       {
+        JNIEnv* result;
+        CheckErrorCode(vm.AttachCurrentThread(&result, nullptr));
+        return UniqueEnv(result, JNIEnvDeleter(vm));
+       }
+
+    inline void DetachCurrentThread(JavaVM& vm, UniqueEnv&& env)
+       {
+        env.release();
+        CheckErrorCode(vm.DetachCurrentThread());
+       }
+
+    inline JNIEnv& GetEnv(JavaVM& vm, version version = jni_version_1_1)
+       {
+        JNIEnv* env = nullptr;
+        CheckErrorCode(vm.GetEnv(reinterpret_cast<void**>(&env), Unwrap(version)));
+        return *env;
+       }
+   }
