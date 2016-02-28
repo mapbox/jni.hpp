@@ -42,7 +42,7 @@ static void RegisterLowLevel(JavaVM* vm)
     jni::RegisterNatives(env, jni::FindClass(env, "LowLevelGreeter"), {
       { "greet", "([Ljava/lang/String;)V", reinterpret_cast<void*>(&Greeter::Greet) }
     });
-   };
+   }
 
 static void RegisterHighLevel(JavaVM* vm)
    {
@@ -66,7 +66,7 @@ static void RegisterHighLevel(JavaVM* vm)
                   u"Hello, " + jni::Make<std::u16string>(env, args.Get(env, 0)) + u" (Native High-Level)"));
          })
     });
-   };
+   }
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*)
    {
