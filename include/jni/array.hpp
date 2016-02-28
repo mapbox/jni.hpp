@@ -21,11 +21,11 @@ namespace jni
             UntaggedType* array = nullptr;
 
         public:
-            Array(UntaggedType* a)
+            explicit Array(UntaggedType* a)
                : array(a)
                {}
 
-            Array(UniqueGlobalRef<UntaggedType>&& r)
+            explicit Array(UniqueGlobalRef<UntaggedType>&& r)
                : reference(std::move(r)),
                  array(reference.get())
                {}
@@ -61,11 +61,11 @@ namespace jni
             UntaggedType* array = nullptr;
 
         public:
-            Array(UntaggedType* a)
+            explicit Array(UntaggedType* a)
                : array(a)
                {}
 
-            Array(UniqueGlobalRef<UntaggedType>&& r)
+            explicit Array(UniqueGlobalRef<UntaggedType>&& r)
                : reference(std::move(r)),
                  array(reference.get())
                {}

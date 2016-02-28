@@ -557,11 +557,11 @@ int main()
         assert(voidObject.signature == std::string("(Lmapbox/com/Test;)V"));
         reinterpret_cast<jboolean (*)(JNIEnv*, jobject, jobject)>(voidObject.fnPtr)(&env, nullptr, nullptr);
 
-        auto objectVoid = jni::NativeMethod("objectVoid", [] (JNIEnv&, ObjectOrClass) -> jni::Object<Test> { return nullptr; });
+        auto objectVoid = jni::NativeMethod("objectVoid", [] (JNIEnv&, ObjectOrClass) -> jni::Object<Test> { return jni::Object<Test>(); });
         assert(objectVoid.signature == std::string("()Lmapbox/com/Test;"));
         assert(reinterpret_cast<jobject (*)(JNIEnv*, jobject)>(objectVoid.fnPtr)(&env, nullptr) == nullptr);
 
-        auto objectObject = jni::NativeMethod("objectObject", [] (JNIEnv&, ObjectOrClass, jni::Object<Test>) -> jni::Object<Test> { return nullptr; });
+        auto objectObject = jni::NativeMethod("objectObject", [] (JNIEnv&, ObjectOrClass, jni::Object<Test>) -> jni::Object<Test> { return jni::Object<Test>(); });
         assert(objectObject.signature == std::string("(Lmapbox/com/Test;)Lmapbox/com/Test;"));
         assert(reinterpret_cast<jobject (*)(JNIEnv*, jobject, jobject)>(objectObject.fnPtr)(&env, nullptr, nullptr) == nullptr);
 

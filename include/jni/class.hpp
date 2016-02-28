@@ -15,11 +15,11 @@ namespace jni
         public:
             using TagType = TheTag;
 
-            Class(jclass* c)
+            explicit Class(jclass* c)
                : clazz(c)
                {}
 
-            Class(JNIEnv& env)
+            explicit Class(JNIEnv& env)
                : reference(NewGlobalRef(env, FindClass(env, TagType::Name()))),
                  clazz(reference.get())
                {}

@@ -24,14 +24,14 @@ namespace jni
             UntaggedType* obj = nullptr;
 
         public:
-            Object(std::nullptr_t = nullptr)
+            explicit Object(std::nullptr_t = nullptr)
                {}
 
-            Object(UntaggedType* o)
+            explicit Object(UntaggedType* o)
                : obj(o)
                {}
 
-            Object(UniqueGlobalRef<UntaggedType>&& r)
+            explicit Object(UniqueGlobalRef<UntaggedType>&& r)
                : reference(std::move(r)),
                  obj(reference.get())
                {}
