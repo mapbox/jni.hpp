@@ -14,34 +14,30 @@ static void RegisterLowLevel(JavaVM* vm)
     static jni::jfieldID& outFieldID = jni::GetStaticFieldID(env, *systemClass, "out", "Ljava/io/PrintStream;");
     static jni::jmethodID& printlnMethodID = jni::GetMethodID(env, *printStreamClass, "println", "(Ljava/lang/String;)V");
 
-    struct Greeter
+    auto greet = [] (jni::JNIEnv* env, jni::jobject*, jni::jarray<jni::jobject>* args)
        {
-        static void Greet(JNIEnv* env, jobject, jobjectArray args)
+        try
            {
-            try
-               {
-                auto greeting = std::u16string(u"Hello, ") +
-                    std::get<0>(
-                       jni::GetStringChars(*env,
-                          reinterpret_cast<jni::jstring*>(
-                              jni::GetObjectArrayElement(*env, jni::Wrap<jni::jobjectArray*>(args), 0)))).get() +
-                    u" (Native Low-Level)";
+            auto greeting = std::u16string(u"Hello, ") +
+                std::get<0>(
+                   jni::GetStringChars(*env,
+                      reinterpret_cast<jni::jstring*>(
+                          jni::GetObjectArrayElement(*env, args, 0)))).get() +
+                u" (Native Low-Level)";
 
-                jni::CallMethod<void>(*env,
-                    jni::GetStaticField<jni::jobject*>(*env, *systemClass, outFieldID),
-                    printlnMethodID,
-                    jni::NewString(*env, greeting));
-               }
-            catch (...)
-               {
-                jni::ThrowJavaError(*env, std::current_exception());
-               }
+            jni::CallMethod<void>(*env,
+                jni::GetStaticField<jni::jobject*>(*env, *systemClass, outFieldID),
+                printlnMethodID,
+                jni::NewString(*env, greeting));
+           }
+        catch (...)
+           {
+            jni::ThrowJavaError(*env, std::current_exception());
            }
        };
 
-    jni::RegisterNatives(env, jni::FindClass(env, "LowLevelGreeter"), {
-      { "greet", "([Ljava/lang/String;)V", reinterpret_cast<void*>(&Greeter::Greet) }
-    });
+    jni::RegisterNatives(env, jni::FindClass(env, "LowLevelGreeter"),
+        jni::MakeNativeMethod("greet", "([Ljava/lang/String;)V", greet));
    }
 
 static void RegisterHighLevel(JavaVM* vm)
@@ -58,14 +54,15 @@ static void RegisterHighLevel(JavaVM* vm)
     static jni::StaticField<System, jni::Object<PrintStream>> out { env, system, "out" };
     static jni::Method<PrintStream, void (jni::String)> println { env, printStream, "println" };
 
-    jni::RegisterNatives(env, jni::Class<Greeter>::Find(env), {
-       jni::NativeMethod("greet", [&] (jni::JNIEnv& env, jni::Object<Greeter>, jni::Array<jni::String> args)
-         {
-          system.Get(env, out).Call(env, println,
-              jni::Make<jni::String>(env,
-                  u"Hello, " + jni::Make<std::u16string>(env, args.Get(env, 0)) + u" (Native High-Level)"));
-         })
-    });
+    auto greet = [] (jni::JNIEnv& env, jni::Object<Greeter>, jni::Array<jni::String> args)
+       {
+        system.Get(env, out).Call(env, println,
+            jni::Make<jni::String>(env,
+                u"Hello, " + jni::Make<std::u16string>(env, args.Get(env, 0)) + u" (Native High-Level)"));
+       };
+
+    jni::RegisterNatives(env, jni::Class<Greeter>::Find(env),
+         jni::MakeNativeMethod("greet", greet));
    }
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*)

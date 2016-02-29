@@ -6,9 +6,13 @@ test:
 
 .PHONY: test
 
-example:
-	$(CXX) -dynamiclib -o example/libhello.jnilib $(CFLAGS) -Wno-shadow -Itest example/hello.cpp
-	javac example/Hello.java
-	cd example && java Hello $(shell whoami)
+examples:
+	$(CXX) -dynamiclib -o examples/libhello.jnilib $(CFLAGS) -Wno-shadow -Wno-padded -Itest examples/hello.cpp
+	javac examples/Hello.java
+	cd examples && java Hello $(shell whoami)
 
-.PHONY: example
+	$(CXX) -dynamiclib -o examples/libpeer.jnilib $(CFLAGS) -Wno-shadow -Wno-padded -Itest examples/native_peer.cpp
+	javac examples/NativePeer.java
+	cd examples && java NativePeer
+
+.PHONY: examples

@@ -533,36 +533,36 @@ int main()
        {
         using ObjectOrClass = typename std::decay<decltype(objectOrClass)>::type;
 
-        auto voidVoid = jni::NativeMethod("voidVoid", [] (JNIEnv&, ObjectOrClass) {});
+        auto voidVoid = jni::MakeNativeMethod("voidVoid", [] (JNIEnv&, ObjectOrClass) {});
         assert(voidVoid.name == std::string("voidVoid"));
         assert(voidVoid.signature == std::string("()V"));
         reinterpret_cast<void (*)(JNIEnv*, jobject)>(voidVoid.fnPtr)(&env, nullptr);
 
-        auto trueVoid = jni::NativeMethod("true", [] (JNIEnv&, ObjectOrClass) { return jni::jni_true; });
+        auto trueVoid = jni::MakeNativeMethod("true", [] (JNIEnv&, ObjectOrClass) { return jni::jni_true; });
         assert(trueVoid.signature == std::string("()Z"));
         assert(reinterpret_cast<jboolean (*)(JNIEnv*, jobject)>(trueVoid.fnPtr)(&env, nullptr) == JNI_TRUE);
 
-        auto falseVoid = jni::NativeMethod("false", [] (JNIEnv&, ObjectOrClass) { return jni::jni_false; });
+        auto falseVoid = jni::MakeNativeMethod("false", [] (JNIEnv&, ObjectOrClass) { return jni::jni_false; });
         assert(falseVoid.signature == std::string("()Z"));
         assert(reinterpret_cast<jboolean (*)(JNIEnv*, jobject)>(falseVoid.fnPtr)(&env, nullptr) == JNI_FALSE);
 
-        auto voidTrue = jni::NativeMethod("voidTrue", [] (JNIEnv&, ObjectOrClass, jni::jboolean b) { assert( b); });
+        auto voidTrue = jni::MakeNativeMethod("voidTrue", [] (JNIEnv&, ObjectOrClass, jni::jboolean b) { assert( b); });
         assert(voidTrue.signature == std::string("(Z)V"));
         reinterpret_cast<jboolean (*)(JNIEnv*, jobject, jboolean)>(voidTrue.fnPtr)(&env, nullptr, JNI_TRUE);
 
-        auto voidFalse = jni::NativeMethod("voidFalse", [] (JNIEnv&, ObjectOrClass, jni::jboolean b) { assert(!b); });
+        auto voidFalse = jni::MakeNativeMethod("voidFalse", [] (JNIEnv&, ObjectOrClass, jni::jboolean b) { assert(!b); });
         assert(voidFalse.signature == std::string("(Z)V"));
         reinterpret_cast<jboolean (*)(JNIEnv*, jobject, jboolean)>(voidFalse.fnPtr)(&env, nullptr, JNI_FALSE);
 
-        auto voidObject = jni::NativeMethod("voidObject", [] (JNIEnv&, ObjectOrClass, jni::Object<Test>) {});
+        auto voidObject = jni::MakeNativeMethod("voidObject", [] (JNIEnv&, ObjectOrClass, jni::Object<Test>) {});
         assert(voidObject.signature == std::string("(Lmapbox/com/Test;)V"));
         reinterpret_cast<jboolean (*)(JNIEnv*, jobject, jobject)>(voidObject.fnPtr)(&env, nullptr, nullptr);
 
-        auto objectVoid = jni::NativeMethod("objectVoid", [] (JNIEnv&, ObjectOrClass) -> jni::Object<Test> { return jni::Object<Test>(); });
+        auto objectVoid = jni::MakeNativeMethod("objectVoid", [] (JNIEnv&, ObjectOrClass) -> jni::Object<Test> { return jni::Object<Test>(); });
         assert(objectVoid.signature == std::string("()Lmapbox/com/Test;"));
         assert(reinterpret_cast<jobject (*)(JNIEnv*, jobject)>(objectVoid.fnPtr)(&env, nullptr) == nullptr);
 
-        auto objectObject = jni::NativeMethod("objectObject", [] (JNIEnv&, ObjectOrClass, jni::Object<Test>) -> jni::Object<Test> { return jni::Object<Test>(); });
+        auto objectObject = jni::MakeNativeMethod("objectObject", [] (JNIEnv&, ObjectOrClass, jni::Object<Test>) -> jni::Object<Test> { return jni::Object<Test>(); });
         assert(objectObject.signature == std::string("(Lmapbox/com/Test;)Lmapbox/com/Test;"));
         assert(reinterpret_cast<jobject (*)(JNIEnv*, jobject, jobject)>(objectObject.fnPtr)(&env, nullptr, nullptr) == nullptr);
 
@@ -583,17 +583,17 @@ int main()
             return 0;
            };
 
-        auto throwsException = jni::NativeMethod("throwsException", [] (JNIEnv&, ObjectOrClass) { throw std::runtime_error("test"); });
+        auto throwsException = jni::MakeNativeMethod("throwsException", [] (JNIEnv&, ObjectOrClass) { throw std::runtime_error("test"); });
         lastExceptionMessage = nullptr;
         reinterpret_cast<void (*)(JNIEnv*, jobject)>(throwsException.fnPtr)(&env, nullptr);
         assert(lastExceptionMessage == std::string("test"));
 
-        auto throwsUnknown = jni::NativeMethod("throwsUnknown", [] (JNIEnv&, ObjectOrClass) { throw Test(); });
+        auto throwsUnknown = jni::MakeNativeMethod("throwsUnknown", [] (JNIEnv&, ObjectOrClass) { throw Test(); });
         lastExceptionMessage = nullptr;
         reinterpret_cast<void (*)(JNIEnv*, jobject)>(throwsUnknown.fnPtr)(&env, nullptr);
         assert(lastExceptionMessage == std::string("unknown native exception"));
 
-        auto javaException = jni::NativeMethod("javaException", [] (JNIEnv&, ObjectOrClass) { jni::ThrowNew(env, jni::FindClass(env, "java/lang/Error"), "Java exception"); });
+        auto javaException = jni::MakeNativeMethod("javaException", [] (JNIEnv&, ObjectOrClass) { jni::ThrowNew(env, jni::FindClass(env, "java/lang/Error"), "Java exception"); });
         lastExceptionMessage = nullptr;
         reinterpret_cast<void (*)(JNIEnv*, jobject)>(javaException.fnPtr)(&env, nullptr);
         assert(lastExceptionMessage == std::string("Java exception"));
@@ -660,6 +660,53 @@ int main()
     std::vector<jboolean> vec = { jni::jni_true };
     assert(jni::Make<std::vector<jboolean>>(env, jni::Make<jni::Array<jni::jboolean>>(env, vec)) == vec);
 
+
+    static JNINativeMethod methods[3];
+
+    struct Peer
+       {
+        jni::jboolean True(jni::JNIEnv&) { return jni::jni_true; }
+        jni::jboolean False(jni::JNIEnv&) { return jni::jni_false; }
+        void Void(jni::JNIEnv&, jni::jboolean b) { assert(b == jni::jni_true); }
+       };
+
+    static Peer peerInstance;
+
+    env.functions->GetFieldID = [] (JNIEnv*, jclass clazz, const char* name, const char* sig) -> jfieldID
+       {
+        assert(clazz = jni::Unwrap(classValue.Ptr()));
+        assert(name == std::string("peer"));
+        assert(sig == std::string("J"));
+        return jni::Unwrap(objectFieldID.Ptr());
+       };
+
+    env.functions->GetLongField = [] (JNIEnv*, jobject obj, jfieldID fieldID) -> jlong
+       {
+        assert(obj = jni::Unwrap(objectValue.Ptr()));
+        assert(fieldID = jni::Unwrap(objectFieldID.Ptr()));
+        return reinterpret_cast<jlong>(&peerInstance);
+       };
+
+    env.functions->RegisterNatives = [] (JNIEnv*, jclass, const JNINativeMethod* m, jint len) -> jint
+       {
+        assert(len == 3);
+        std::copy(m, m + 3, methods);
+        return JNI_OK;
+       };
+
+    #define METHOD(MethodPtr, name) jni::NativePeerMethod<decltype(MethodPtr), (MethodPtr)>(name)
+
+    jni::RegisterNativePeer(env, testClass, "peer",
+        METHOD(&Peer::True, "true"),
+        METHOD(&Peer::False, "false"),
+        METHOD(&Peer::Void, "void"));
+
+    assert(methods[0].name == std::string("true"));
+    assert(methods[1].name == std::string("false"));
+    assert(methods[2].name == std::string("void"));
+    assert(reinterpret_cast<jboolean (*)(JNIEnv&, jobject)>(methods[0].fnPtr)(env, jni::Unwrap(objectValue.Ptr())) == jni::jni_true);
+    assert(reinterpret_cast<jboolean (*)(JNIEnv&, jobject)>(methods[1].fnPtr)(env, jni::Unwrap(objectValue.Ptr())) == jni::jni_false);
+    reinterpret_cast<void (*)(JNIEnv&, jobject, jboolean)>(methods[2].fnPtr)(env, jni::Unwrap(objectValue.Ptr()), jni::jni_true);
 
     return 0;
    }

@@ -1,4 +1,4 @@
 tst*
-example/*.class
-example/*.log
-example/libhello.jnilib
+examples/*.class
+examples/*.log
+examples/*.jnilib

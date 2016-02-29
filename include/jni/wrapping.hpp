@@ -132,10 +132,20 @@ namespace jni
     template <> struct Wrapper< jmethodID > : ReferenceTypeUnwrapper< jmethodID, ::jmethodID > {};
 
 
+    template < class T, class R, class... Args >
+    struct Wrapper< JNINativeMethod< R (JNIEnv*, T*, Args...) > >
+       {
+        ::JNINativeMethod Unwrap(JNINativeMethod<R (JNIEnv*, T*, Args...)> method) const
+           {
+            return { method.name, method.signature, reinterpret_cast<void*>(method.fnPtr) };
+           }
+       };
+
+
     template <>
     struct Wrapper<version>
-      {
+       {
         version Wrap(::jint v) const { return static_cast<version>(v); }
         ::jint Unwrap(version v) const { return static_cast<::jint>(v); }
-      };
+       };
    }

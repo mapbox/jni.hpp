@@ -61,10 +61,11 @@ The `Callable` object passed to `jni::NativeMethod` must be movable and uniquely
 
 ## Example code
 
-Example code for both the low-level and high-level wrappers is provided in [the `example` subdirectory](https://github.com/mapbox/jni.hpp/tree/master/example). This code shows the use of jni.hpp for:
+Example code for both the low-level and high-level wrappers is provided in [the `examples` subdirectory](https://github.com/mapbox/jni.hpp/tree/master/examples). This code shows the use of jni.hpp for:
 
 * Binding native methods such that they can be called from Java.
 * Calling back into Java methods from native code.
+* Binding native methods for a "native peer": a long-lived native object corresponding to a Java object, usually created when the Java object is created and destroyed when the Java object's finalizer runs.
 
 ## Prior art
 

@@ -518,21 +518,12 @@ namespace jni
        }
 
 
-    inline void RegisterNatives(JNIEnv& env, jclass& clazz, const JNINativeMethod* methods, jsize nMethods)
+    template < class... Methods >
+    inline void RegisterNatives(JNIEnv& env, jclass& clazz, const Methods&... methods)
        {
-        CheckJavaExceptionThenErrorCode(env, env.RegisterNatives(Unwrap(clazz), methods, Unwrap(nMethods)));
-       }
-
-    inline void RegisterNatives(JNIEnv& env, jclass& clazz, std::initializer_list<JNINativeMethod> methods)
-       {
-        RegisterNatives(env, clazz, methods.begin(), methods.size());
-       }
-
-    template < class Array >
-    auto RegisterNatives(JNIEnv& env, jclass& clazz, const Array& methods)
-       -> typename std::enable_if<IsArraylike<Array>::value>::type
-       {
-        RegisterNatives(env, clazz, ArraylikeData(methods), ArraylikeSize(methods));
+        ::JNINativeMethod unwrapped[sizeof...(methods)] = { Unwrap(methods)... };
+        CheckJavaExceptionThenErrorCode(env,
+            env.RegisterNatives(Unwrap(clazz), unwrapped, sizeof...(methods)));
        }
 
     inline void UnregisterNatives(JNIEnv& env, jclass& clazz)

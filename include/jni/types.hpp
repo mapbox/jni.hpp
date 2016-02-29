@@ -56,10 +56,28 @@ namespace jni
     using jmethodID = std::pointer_traits< ::jmethodID >::element_type;
 
     using ::jobjectRefType;
-    using ::JNINativeMethod;
 
     using ::JavaVM;
     using ::JNIEnv;
+
+    template < class T >
+    struct JNINativeMethod;
+
+    template < class R, class... Args >
+    struct JNINativeMethod< R (JNIEnv*, jclass*, Args...) >
+       {
+        const char* name;
+        const char* signature;
+        R (*fnPtr)(JNIEnv*, jclass*, Args...);
+       };
+
+    template < class R, class... Args >
+    struct JNINativeMethod< R (JNIEnv*, jobject*, Args...) >
+       {
+        const char* name;
+        const char* signature;
+        R (*fnPtr)(JNIEnv*, jobject*, Args...);
+       };
 
     enum class version : jint {};
 
