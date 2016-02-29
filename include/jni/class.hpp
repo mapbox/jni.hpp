@@ -5,6 +5,8 @@
 
 namespace jni
    {
+    template < class TheTag > class Object;
+    template < class TheTag, class... > class Constructor;
     template < class TheTag, class > class StaticField;
     template < class TheTag, class > class StaticMethod;
 
@@ -30,6 +32,12 @@ namespace jni
             explicit operator bool() const { return clazz; }
             jclass& operator*() const { return *clazz; }
             jclass* Get() const { return clazz; }
+
+            template < class... Args >
+            Object<TagType> New(JNIEnv& env, const Constructor<TagType, Args...>& method, const Args&... args) const
+               {
+                return Object<TagType>(&NewObject(env, *clazz, *method, Untag(args)...));
+               }
 
             template < class T >
             T Get(JNIEnv& env, const StaticField<TagType, T>& field) const

@@ -22,9 +22,6 @@ namespace jni
               : method(GetMethodID(env, *clazz, "<init>", TypeSignature<void (Args...)>()()))
                {}
 
-            Object<TagType> operator()(JNIEnv& env, const Class<TagType>& clazz, const Args&... args) const
-              {
-               return Object<TagType>(&NewObject(env, *clazz, method, Untag(args)...));
-              }
+            jmethodID& operator*() const { return method; }
        };
    }

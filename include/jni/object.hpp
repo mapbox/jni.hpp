@@ -7,6 +7,7 @@
 
 namespace jni
    {
+    template < class TheTag > class Class;
     template < class TheTag, class > class Field;
     template < class TheTag, class > class Method;
 

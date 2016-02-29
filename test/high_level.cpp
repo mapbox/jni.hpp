@@ -119,9 +119,9 @@ int main()
     jni::Constructor<Test, jni::jboolean>     booleanNew { env, testClass };
     jni::Constructor<Test, jni::Object<Test>> objectNew  { env, testClass };
 
-    assert(defaultNew(env, testClass).Get() == object.Get());
-    assert(booleanNew(env, testClass, true).Get() == object.Get());
-    assert(objectNew(env, testClass, object).Get() == object.Get());
+    assert(testClass.New(env, defaultNew).Get() == object.Get());
+    assert(testClass.New(env, booleanNew, jni::jni_true).Get() == object.Get());
+    assert(testClass.New(env, objectNew, object).Get() == object.Get());
 
 
     /// StaticField
