@@ -15,20 +15,18 @@ namespace jni
     using NativeType = UnwrappedType<UntaggedType<T>>;
 
     template < class T >
-    struct NativeMessageMaker;
+    struct NativeMethodMaker;
 
     template < class T, class R, class TagType, class... Args >
-    struct NativeMessageMaker< R (T::*)(JNIEnv&, Class<TagType>, Args...) const >
+    struct NativeMethodMaker< R (T::*)(JNIEnv&, Class<TagType>, Args...) const >
        {
         template < class M >
         JNINativeMethod operator()(const char* name, M&& m)
            {
             static M method = std::move(m);
 
-            struct Wrapper
-               {
-                static NativeType<R>
-                Method(JNIEnv* env, ::jclass clazz, NativeType<Args>... args)
+            NativeType<R> (*wrapper)(JNIEnv*, ::jclass, NativeType<Args>...) =
+                [] (JNIEnv* env, ::jclass clazz, NativeType<Args>... args)
                    {
                     try
                        {
@@ -39,27 +37,24 @@ namespace jni
                     catch (...)
                        {
                         ThrowJavaError(*env, std::current_exception());
+                        return Unwrap(Untag(R()));
                        }
+                   };
 
-                    return Unwrap(Untag(R()));
-                   }
-               };
-
-            return { name, TypeSignature<R (Args...)>()(), reinterpret_cast<void*>(&Wrapper::Method) };
+            return { name, TypeSignature<R (Args...)>()(), reinterpret_cast<void*>(wrapper) };
            }
        };
 
     template < class T, class TagType, class... Args >
-    struct NativeMessageMaker< void (T::*)(JNIEnv&, Class<TagType>, Args...) const >
+    struct NativeMethodMaker< void (T::*)(JNIEnv&, Class<TagType>, Args...) const >
        {
         template < class M >
         JNINativeMethod operator()(const char* name, M&& m)
            {
             static M method = std::move(m);
 
-            struct Wrapper
-               {
-                static void Method(JNIEnv* env, ::jclass clazz, NativeType<Args>... args)
+            void (*wrapper)(JNIEnv*, ::jclass, NativeType<Args>...) =
+                [] (JNIEnv* env, ::jclass clazz, NativeType<Args>... args)
                    {
                     try
                        {
@@ -71,25 +66,22 @@ namespace jni
                        {
                         ThrowJavaError(*env, std::current_exception());
                        }
-                   }
-               };
+                   };
 
-            return { name, TypeSignature<void (Args...)>()(), reinterpret_cast<void*>(&Wrapper::Method) };
+            return { name, TypeSignature<void (Args...)>()(), reinterpret_cast<void*>(wrapper) };
            }
        };
 
     template < class T, class R, class TagType, class... Args >
-    struct NativeMessageMaker< R (T::*)(JNIEnv&, Object<TagType>, Args...) const >
+    struct NativeMethodMaker< R (T::*)(JNIEnv&, Object<TagType>, Args...) const >
        {
         template < class M >
         JNINativeMethod operator()(const char* name, M&& m)
            {
             static M method = std::move(m);
 
-            struct Wrapper
-               {
-                static NativeType<R>
-                Method(JNIEnv* env, ::jobject obj, NativeType<Args>... args)
+            NativeType<R> (*wrapper)(JNIEnv*, ::jobject, NativeType<Args>...) =
+                [] (JNIEnv* env, ::jobject obj, NativeType<Args>... args)
                    {
                     try
                        {
@@ -100,27 +92,24 @@ namespace jni
                     catch (...)
                        {
                         ThrowJavaError(*env, std::current_exception());
+                        return Unwrap(Untag(R()));
                        }
+                   };
 
-                    return Unwrap(Untag(R()));
-                   }
-               };
-
-            return { name, TypeSignature<R (Args...)>()(), reinterpret_cast<void*>(&Wrapper::Method) };
+            return { name, TypeSignature<R (Args...)>()(), reinterpret_cast<void*>(wrapper) };
            }
        };
 
     template < class T, class TagType, class... Args >
-    struct NativeMessageMaker< void (T::*)(JNIEnv&, Object<TagType>, Args...) const >
+    struct NativeMethodMaker< void (T::*)(JNIEnv&, Object<TagType>, Args...) const >
        {
         template < class M >
         JNINativeMethod operator()(const char* name, M&& m)
            {
             static M method = std::move(m);
 
-            struct Wrapper
-               {
-                static void Method(JNIEnv* env, ::jobject obj, NativeType<Args>... args)
+            void (*wrapper)(JNIEnv*, ::jobject, NativeType<Args>...) =
+                [] (JNIEnv* env, ::jobject obj, NativeType<Args>... args)
                    {
                     try
                        {
@@ -132,16 +121,15 @@ namespace jni
                        {
                         ThrowJavaError(*env, std::current_exception());
                        }
-                   }
-               };
+                   };
 
-            return { name, TypeSignature<void (Args...)>()(), reinterpret_cast<void*>(&Wrapper::Method) };
+            return { name, TypeSignature<void (Args...)>()(), reinterpret_cast<void*>(wrapper) };
            }
        };
 
     template < class M >
     JNINativeMethod NativeMethod(const char* name, M&& m)
        {
-        return NativeMessageMaker<decltype(&M::operator())>()(name, std::move(m));
+        return NativeMethodMaker<decltype(&M::operator())>()(name, std::move(m));
        }
    }
