@@ -33,7 +33,7 @@ namespace jni
                     try
                        {
                         return Unwrap(Untag(method(*env,
-                            Class<TagType>(Wrap<jclass*>(clazz)),
+                            Class<TagType>(*Wrap<jclass*>(clazz)),
                             Tag<Args>(Wrap<UntaggedType<Args>>(args))...)));
                        }
                     catch (...)
@@ -64,7 +64,7 @@ namespace jni
                     try
                        {
                         method(*env,
-                            Class<TagType>(Wrap<jclass*>(clazz)),
+                            Class<TagType>(*Wrap<jclass*>(clazz)),
                             Tag<Args>(Wrap<UntaggedType<Args>>(args))...);
                        }
                     catch (...)

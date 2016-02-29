@@ -21,9 +21,9 @@ namespace jni
             using TagType = TheTag;
 
             Method(JNIEnv& env, const Class<TagType>& clazz, const char* name)
-              : method(GetMethodID(env, *clazz, name, TypeSignature<R (Args...)>()()))
+              : method(GetMethodID(env, clazz, name, TypeSignature<R (Args...)>()()))
                {}
 
-            jmethodID& operator*() const { return method; }
+            operator jmethodID&() const { return method; }
        };
    }

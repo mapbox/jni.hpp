@@ -18,9 +18,9 @@ namespace jni
             using TagType = TheTag;
 
             Field(JNIEnv& env, const Class<TagType>& clazz, const char* name)
-              : field(GetFieldID(env, *clazz, name, TypeSignature<T>()()))
+              : field(GetFieldID(env, clazz, name, TypeSignature<T>()()))
                {}
 
-            jfieldID& operator*() const { return field; }
+            operator jfieldID&() const { return field; }
        };
    }

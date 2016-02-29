@@ -43,13 +43,16 @@ int main()
     static Testable<jni::jclass> classValue;
     static Testable<jni::jobject> objectValue;
 
-    static bool calledNewGlobalRef = false;
-
     env.functions->FindClass = [] (JNIEnv*, const char* name) -> jclass
        {
         assert(name == Test::Name());
         return Unwrap(classValue.Ptr());
        };
+
+    jni::Class<Test> testClass { jni::Class<Test>::Find(env) };
+    assert(classValue == testClass);
+
+    static bool calledNewGlobalRef = false;
 
     env.functions->NewGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
        {
@@ -61,9 +64,7 @@ int main()
        {
        };
 
-    jni::Class<Test> testClass { env };
-
-    assert(classValue == *testClass);
+    testClass.NewGlobalRef(env);
     assert(calledNewGlobalRef);
 
 

@@ -52,16 +52,16 @@ static void RegisterHighLevel(JavaVM* vm)
 
     jni::JNIEnv& env { jni::GetEnv(*vm) };
 
-    static jni::Class<System>* system = new jni::Class<System>(env);
-    static jni::Class<PrintStream>* printStream = new jni::Class<PrintStream>(env);
+    static jni::Class<System> system = jni::Class<System>::Find(env).NewGlobalRef(env).Release();
+    static jni::Class<PrintStream> printStream = jni::Class<PrintStream>::Find(env).NewGlobalRef(env).Release();
 
-    static jni::StaticField<System, jni::Object<PrintStream>> out { env, *system, "out" };
-    static jni::Method<PrintStream, void (jni::String)> println { env, *printStream, "println" };
+    static jni::StaticField<System, jni::Object<PrintStream>> out { env, system, "out" };
+    static jni::Method<PrintStream, void (jni::String)> println { env, printStream, "println" };
 
-    jni::RegisterNatives(env, *jni::Class<Greeter>(env), {
+    jni::RegisterNatives(env, jni::Class<Greeter>::Find(env), {
        jni::NativeMethod("greet", [&] (jni::JNIEnv& env, jni::Object<Greeter>, jni::Array<jni::String> args)
          {
-          system->Get(env, out).Call(env, println,
+          system.Get(env, out).Call(env, println,
               jni::Make<jni::String>(env,
                   u"Hello, " + jni::Make<std::u16string>(env, args.Get(env, 0)) + u" (Native High-Level)"));
          })
