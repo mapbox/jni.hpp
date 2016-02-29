@@ -28,7 +28,7 @@ namespace jni
 
     template < class T >
     auto Untag(const T& t)
-       -> typename std::enable_if< !IsPrimitive<T>::value, typename T::UntaggedType* >::type
+       -> typename std::enable_if< !IsPrimitive<T>::value, decltype(t.Get()) >::type
        {
         return t.Get();
        }

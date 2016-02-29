@@ -54,7 +54,7 @@ namespace jni
             using TagType = TheTag;
             using ElementType = Object<TagType>;
             using UntaggedType = jarray<jobject>;
-            using UntaggedElementType = typename ElementType::UntaggedType;
+            using UntaggedElementType = typename ElementType::UntaggedObjectType;
 
         private:
             UniqueGlobalRef<UntaggedType> reference;

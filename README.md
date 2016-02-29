@@ -45,12 +45,12 @@ The high-level wrappers consist of a set of classes templated on class tag:
 
 * `jni::Class<Tag>`, a wrapper for a reference to the Java class associated with the tag.
 * `jni::Object<Tag>`, a wrapper for a (possibly-null) reference to an instance of the Java class associated with the tag.
-* `jni::Array<E>`, a wrapper for a reference to a Java array. The element type `E` is a jni.hpp primitive type or `Object<Tag>`.
-* `jni::Constructor<Tag, Args...>`, a `Callable` type wrapping a reference to a constructor for the the Java class associated with the tag. The result type `R` and each argument type in `Args` is a jni.hpp primitive type or `Object<Tag>`.
-* `jni::Method<Tag, R (Args...)>`, a `Callable` type wrapping a reference to an instance method of the Java class associated with the tag. The result type `R` and each argument type in `Args` is a jni.hpp primitive type or `Object<Tag>`.
-* `jni::StaticMethod<Tag, R (Args...)>`, a `Callable` type wrapping a reference to a static method of the Java class associated with the tag. The result type `R` and each argument type in `Args` is a jni.hpp primitive type or `Object<Tag>`.
-* `jni::Field<Tag, T>`, a type representing an instance field of the Java class associated with the tag, and providing `Get` and `Set` methods. The field type `T` is a jni.hpp primitive type or `Object<Tag>`.
-* `jni::StaticField<Tag, T>`, a type representing a static field of the Java class associated with the tag, and providing `Get` and `Set` methods. The field type `T` is a jni.hpp primitive type or `Object<Tag>`.
+* `jni::Array<E>`, a wrapper for a (possibly-null) reference to a Java array. The element type `E` is a jni.hpp primitive type or `Object<Tag>`.
+* `jni::Constructor<Tag, Args...>`, a wrapper for a constructor for the the Java class associated with the tag. The result type `R` and each argument type in `Args` is a jni.hpp primitive type or `Object<Tag>`.
+* `jni::Method<Tag, R (Args...)>`, a wrapper for an instance method of the Java class associated with the tag. The result type `R` and each argument type in `Args` is a jni.hpp primitive type or `Object<Tag>`.
+* `jni::StaticMethod<Tag, R (Args...)>`, a wrapper for a static method of the Java class associated with the tag. The result type `R` and each argument type in `Args` is a jni.hpp primitive type or `Object<Tag>`.
+* `jni::Field<Tag, T>`, a wrapper for an instance field of the Java class associated with the tag, and providing `Get` and `Set` methods. The field type `T` is a jni.hpp primitive type or `Object<Tag>`.
+* `jni::StaticField<Tag, T>`, a wrapper for a static field of the Java class associated with the tag, and providing `Get` and `Set` methods. The field type `T` is a jni.hpp primitive type or `Object<Tag>`.
 
 Finally, the high-level wrappers provide the method `jni::NativeMethod` for binding native methods which use the high-level jni.hpp types. Given a `const char *` method name and a `Callable` object whose call signature uses high-level types, `jni::NativeMethod` returns a `jni::JNINativeMethod` struct that can be included in an array passed to `jni::RegisterNatives`. `jni::NativeMethod` takes care of:
 
