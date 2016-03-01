@@ -111,8 +111,8 @@ static void TestGetArrayLength()
         return 0;
        };
 
-    assert(42 == jni::GetArrayLength(env, arrayValue.Ptr()));
-    assert(Throws<jni::PendingJavaException>([] { jni::GetArrayLength(env, failureValue.Ptr()); }));
+    assert(42 == jni::GetArrayLength(env, arrayValue.Ref()));
+    assert(Throws<jni::PendingJavaException>([] { jni::GetArrayLength(env, failureValue.Ref()); }));
    }
 
 static void TestArrayRegion()
@@ -137,11 +137,11 @@ static void TestArrayRegion()
        };
 
     jni::jboolean boolean = jni::jni_false;
-    jni::GetArrayRegion<jni::jboolean>(env, arrayValue.Ptr(), 0, 1, &boolean);
+    jni::GetArrayRegion<jni::jboolean>(env, arrayValue.Ref(), 0, 1, &boolean);
     assert(boolean == jni::jni_true);
 
     boolean = jni::jni_false;
-    jni::SetArrayRegion<jni::jboolean>(env, arrayValue.Ptr(), 0, 1, &boolean);
+    jni::SetArrayRegion<jni::jboolean>(env, arrayValue.Ref(), 0, 1, &boolean);
    }
 
 int main()

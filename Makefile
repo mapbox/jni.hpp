@@ -9,10 +9,10 @@ test:
 examples:
 	$(CXX) -dynamiclib -o examples/libhello.jnilib $(CFLAGS) -Wno-shadow -Wno-padded -Itest examples/hello.cpp
 	javac examples/Hello.java
-	cd examples && java Hello $(shell whoami)
+	cd examples && java -Xcheck:jni Hello $(shell whoami)
 
 	$(CXX) -dynamiclib -o examples/libpeer.jnilib $(CFLAGS) -Wno-shadow -Wno-padded -Itest examples/native_peer.cpp
 	javac examples/NativePeer.java
-	cd examples && java NativePeer
+	cd examples && java -Xcheck:jni NativePeer
 
 .PHONY: examples

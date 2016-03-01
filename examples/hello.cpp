@@ -18,11 +18,14 @@ static void RegisterLowLevel(JavaVM* vm)
        {
         try
            {
+            jni::NullCheck(*env, args);
+
+            jni::jstring& name = jni::SafeDereference(*env,
+                reinterpret_cast<jni::jstring*>(
+                    jni::GetObjectArrayElement(*env, *args, 0)));
+
             auto greeting = std::u16string(u"Hello, ") +
-                std::get<0>(
-                   jni::GetStringChars(*env,
-                      reinterpret_cast<jni::jstring*>(
-                          jni::GetObjectArrayElement(*env, args, 0)))).get() +
+                std::get<0>(jni::GetStringChars(*env, name)).get() +
                 u" (Native Low-Level)";
 
             jni::CallMethod<void>(*env,

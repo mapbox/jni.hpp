@@ -80,7 +80,7 @@ namespace jni
         throw PendingJavaException();
        }
 
-    [[noreturn]] inline void ThrowNew(JNIEnv& env, jclass& clazz, const char* msg)
+    [[noreturn]] inline void ThrowNew(JNIEnv& env, jclass& clazz, const char* msg = nullptr)
        {
         CheckErrorCode(env.ThrowNew(Unwrap(clazz), msg));
         throw PendingJavaException();
@@ -323,13 +323,13 @@ namespace jni
         return NewString(env, ArraylikeData(chars), ArraylikeSize(chars));
        }
 
-    inline jsize GetStringLength(JNIEnv& env, jstring* string)
+    inline jsize GetStringLength(JNIEnv& env, jstring& string)
        {
         return CheckJavaException(env,
             Wrap<jsize>(env.GetStringLength(Unwrap(string))));
        }
 
-    inline std::tuple<UniqueStringChars, jboolean> GetStringChars(JNIEnv& env, jstring* string)
+    inline std::tuple<UniqueStringChars, jboolean> GetStringChars(JNIEnv& env, jstring& string)
        {
         ::jboolean isCopy = JNI_FALSE;
         const char16_t* result = CheckJavaException(env,
@@ -337,7 +337,7 @@ namespace jni
         return std::make_tuple(UniqueStringChars(result, StringCharsDeleter(env, string)), Wrap<jboolean>(isCopy));
        }
 
-    inline void ReleaseStringChars(JNIEnv& env, jstring* string, UniqueStringChars&& chars)
+    inline void ReleaseStringChars(JNIEnv& env, jstring& string, UniqueStringChars&& chars)
        {
         env.ReleaseStringChars(Unwrap(string), Unwrap(chars.release()));
         CheckJavaException(env);
@@ -349,13 +349,13 @@ namespace jni
             Wrap<jstring*>(env.NewStringUTF(bytes)));
        }
 
-    inline jsize GetStringUTFLength(JNIEnv& env, jstring* string)
+    inline jsize GetStringUTFLength(JNIEnv& env, jstring& string)
        {
         return CheckJavaException(env,
             Wrap<jsize>(env.GetStringUTFLength(Unwrap(string))));
        }
 
-    inline std::tuple<UniqueStringUTFChars, jboolean> GetStringUTFChars(JNIEnv& env, jstring* string)
+    inline std::tuple<UniqueStringUTFChars, jboolean> GetStringUTFChars(JNIEnv& env, jstring& string)
        {
         ::jboolean isCopy = JNI_FALSE;
         const char* result = CheckJavaException(env,
@@ -363,39 +363,39 @@ namespace jni
         return std::make_tuple(UniqueStringUTFChars(result, StringUTFCharsDeleter(env, string)), Wrap<jboolean>(isCopy));
        }
 
-    inline void ReleaseStringUTFChars(JNIEnv& env, jstring* string, UniqueStringUTFChars&& chars)
+    inline void ReleaseStringUTFChars(JNIEnv& env, jstring& string, UniqueStringUTFChars&& chars)
        {
         env.ReleaseStringUTFChars(Unwrap(string), chars.release());
         CheckJavaException(env);
        }
 
-    inline void GetStringRegion(JNIEnv& env, jstring* string, jsize start, jsize len, char16_t* buf)
+    inline void GetStringRegion(JNIEnv& env, jstring& string, jsize start, jsize len, char16_t* buf)
        {
         env.GetStringRegion(Unwrap(string), Unwrap(start), Unwrap(len), Unwrap(buf));
         CheckJavaException(env);
        }
 
     template < class Array >
-    auto GetStringRegion(JNIEnv& env, jstring* string, jsize start, Array& buf)
+    auto GetStringRegion(JNIEnv& env, jstring& string, jsize start, Array& buf)
        -> typename std::enable_if< IsArraylike<Array>::value >::type
        {
         GetStringRegion(env, string, start, ArraylikeSize(buf), ArraylikeData(buf));
        }
 
-    inline void GetStringUTFRegion(JNIEnv& env, jstring* string, jsize start, jsize len, char* buf)
+    inline void GetStringUTFRegion(JNIEnv& env, jstring& string, jsize start, jsize len, char* buf)
        {
         env.GetStringUTFRegion(Unwrap(string), Unwrap(start), Unwrap(len), buf);
         CheckJavaException(env);
        }
 
     template < class Array >
-    auto GetStringUTFRegion(JNIEnv& env, jstring* string, jsize start, Array& buf)
+    auto GetStringUTFRegion(JNIEnv& env, jstring& string, jsize start, Array& buf)
        -> typename std::enable_if< IsArraylike<Array>::value >::type
        {
         GetStringUTFRegion(env, string, start, ArraylikeSize(buf), ArraylikeData(buf));
        }
 
-    inline std::tuple<UniqueStringCritical, jboolean> GetStringCritical(JNIEnv& env, jstring* string)
+    inline std::tuple<UniqueStringCritical, jboolean> GetStringCritical(JNIEnv& env, jstring& string)
        {
         ::jboolean isCopy = JNI_FALSE;
         const char16_t* result = CheckJavaException(env,
@@ -403,7 +403,7 @@ namespace jni
         return std::make_tuple(UniqueStringCritical(result, StringCriticalDeleter(env, string)), Wrap<jboolean>(isCopy));
        }
 
-    inline void ReleaseStringCritical(JNIEnv& env, jstring* string, UniqueStringCritical&& chars)
+    inline void ReleaseStringCritical(JNIEnv& env, jstring& string, UniqueStringCritical&& chars)
        {
         env.ReleaseStringCritical(Unwrap(string), Unwrap(chars.release()));
         CheckJavaException(env);
@@ -411,7 +411,7 @@ namespace jni
 
 
     template < class E >
-    jsize GetArrayLength(JNIEnv& env, jarray<E>* array)
+    jsize GetArrayLength(JNIEnv& env, jarray<E>& array)
        {
         return CheckJavaException(env,
             Wrap<jsize>(env.GetArrayLength(Unwrap(array))));
@@ -425,7 +425,7 @@ namespace jni
        }
 
     template < class E >
-    std::tuple<UniqueArrayElements<E>, jboolean> GetArrayElements(JNIEnv& env, jarray<E>* array)
+    std::tuple<UniqueArrayElements<E>, jboolean> GetArrayElements(JNIEnv& env, jarray<E>& array)
        {
         ::jboolean isCopy = JNI_FALSE;
         const E** result = CheckJavaException(env,
@@ -434,21 +434,21 @@ namespace jni
        }
 
     template < class E >
-    void ReleaseArrayElements(JNIEnv& env, jarray<E>* array, E** elems)
+    void ReleaseArrayElements(JNIEnv& env, jarray<E>& array, E** elems)
        {
         (env.*(TypedMethods<E>::ReleaseArrayElements))(Unwrap(array), elems, JNI_COMMIT);
         CheckJavaException(env);
        }
 
     template < class E >
-    void ReleaseArrayElements(JNIEnv& env, jarray<E>* array, UniqueArrayElements<E>&& elems)
+    void ReleaseArrayElements(JNIEnv& env, jarray<E>& array, UniqueArrayElements<E>&& elems)
        {
         (env.*(TypedMethods<E>::ReleaseArrayElements))(Unwrap(array), elems.release(), 0);
         CheckJavaException(env);
        }
 
     template < class E >
-    std::tuple<UniquePrimitiveArrayCritical<E>, jboolean> GetPrimitiveArrayCritical(JNIEnv& env, jarray<E>* array)
+    std::tuple<UniquePrimitiveArrayCritical<E>, jboolean> GetPrimitiveArrayCritical(JNIEnv& env, jarray<E>& array)
        {
         ::jboolean isCopy = JNI_FALSE;
         void* result = CheckJavaException(env,
@@ -457,42 +457,42 @@ namespace jni
        }
 
     template < class E >
-    void ReleasePrimitiveArrayCritical(JNIEnv& env, jarray<E>* array, void* carray)
+    void ReleasePrimitiveArrayCritical(JNIEnv& env, jarray<E>& array, void* carray)
        {
         env.ReleasePrimitiveArrayCritical(Unwrap(array), carray, 0);
         CheckJavaException(env);
        }
 
     template < class E >
-    void ReleasePrimitiveArrayCritical(JNIEnv& env, jarray<E>* array, UniquePrimitiveArrayCritical<E>&& carray)
+    void ReleasePrimitiveArrayCritical(JNIEnv& env, jarray<E>& array, UniquePrimitiveArrayCritical<E>&& carray)
        {
         env.ReleasePrimitiveArrayCritical(Unwrap(array), carray.release(), JNI_COMMIT);
         CheckJavaException(env);
        }
 
     template < class T >
-    void GetArrayRegion(JNIEnv& env, jarray<T>* array, jsize start, jsize len, T* buf)
+    void GetArrayRegion(JNIEnv& env, jarray<T>& array, jsize start, jsize len, T* buf)
        {
         (env.*(TypedMethods<T>::GetArrayRegion))(Unwrap(array), Unwrap(start), Unwrap(len), buf);
         CheckJavaException(env);
        }
 
     template < class T, class Array >
-    auto GetArrayRegion(JNIEnv& env, jarray<T>* array, jsize start, Array& buf)
+    auto GetArrayRegion(JNIEnv& env, jarray<T>& array, jsize start, Array& buf)
        -> typename std::enable_if< IsArraylike<Array>::value >::type
        {
         GetArrayRegion(env, array, start, ArraylikeSize(buf), ArraylikeData(buf));
        }
 
     template < class T >
-    void SetArrayRegion(JNIEnv& env, jarray<T>* array, jsize start, jsize len, const T* buf)
+    void SetArrayRegion(JNIEnv& env, jarray<T>& array, jsize start, jsize len, const T* buf)
        {
         (env.*(TypedMethods<T>::SetArrayRegion))(Unwrap(array), Unwrap(start), Unwrap(len), buf);
         CheckJavaException(env);
        }
 
     template < class T, class Array >
-    auto SetArrayRegion(JNIEnv& env, jarray<T>* array, jsize start, const Array& buf)
+    auto SetArrayRegion(JNIEnv& env, jarray<T>& array, jsize start, const Array& buf)
        -> typename std::enable_if< IsArraylike<Array>::value >::type
        {
         SetArrayRegion(env, array, start, ArraylikeSize(buf), ArraylikeData(buf));
@@ -505,13 +505,13 @@ namespace jni
             Wrap<jarray<jobject>*>(env.NewObjectArray(Unwrap(length), Unwrap(elementClass), Unwrap(initialElement))));
        }
 
-    inline jobject* GetObjectArrayElement(JNIEnv& env, jarray<jobject>* array, jsize index)
+    inline jobject* GetObjectArrayElement(JNIEnv& env, jarray<jobject>& array, jsize index)
        {
         return CheckJavaException(env,
             Wrap<jobject*>(env.GetObjectArrayElement(Unwrap(array), Unwrap(index))));
        }
 
-    inline void SetObjectArrayElement(JNIEnv& env, jarray<jobject>* array, jsize index, jobject* value)
+    inline void SetObjectArrayElement(JNIEnv& env, jarray<jobject>& array, jsize index, jobject* value)
        {
         env.SetObjectArrayElement(Unwrap(array), Unwrap(index), Unwrap(value));
         CheckJavaException(env);

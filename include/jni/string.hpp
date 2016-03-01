@@ -3,6 +3,7 @@
 #include <jni/object.hpp>
 #include <jni/array.hpp>
 #include <jni/make.hpp>
+#include <jni/npe.hpp>
 
 #include <locale>
 #include <codecvt>
@@ -18,8 +19,9 @@ namespace jni
 
     inline std::u16string MakeAnything(ThingToMake<std::u16string>, JNIEnv& env, const String& string)
        {
-        std::u16string result(jni::GetStringLength(env, string.Get()), char16_t());
-        jni::GetStringRegion(env, string.Get(), 0, result);
+        NullCheck(env, string.Get());
+        std::u16string result(jni::GetStringLength(env, *string), char16_t());
+        jni::GetStringRegion(env, *string, 0, result);
         return result;
        }
 

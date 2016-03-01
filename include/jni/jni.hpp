@@ -4,6 +4,7 @@
 
 #include <jni/types.hpp>
 #include <jni/functions.hpp>
+#include <jni/npe.hpp>
 
 
 // High-level

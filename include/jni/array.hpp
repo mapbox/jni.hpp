@@ -36,14 +36,31 @@ namespace jni
 
             jsize Length(JNIEnv& env) const
                {
-                return GetArrayLength(env, array);
+                return GetArrayLength(env, SafeDereference(env, array));
                }
 
             ElementType Get(JNIEnv& env, jsize index) const
                {
                 ElementType e;
-                GetArrayRegion<ElementType>(env, array, index, 1, &e);
+                GetArrayRegion(env, SafeDereference(env, array), index, 1, &e);
                 return e;
+               }
+
+            void Set(JNIEnv& env, jsize index, const ElementType& value)
+               {
+                SetArrayRegion(env, SafeDereference(env, array), index, 1, &value);
+               }
+
+            template < class Array >
+            void GetRegion(JNIEnv& env, jsize start, Array& buf) const
+               {
+                GetArrayRegion(env, SafeDereference(env, array), start, buf);
+               }
+
+            template < class Array >
+            void SetRegion(JNIEnv& env, jsize start, const Array& buf)
+               {
+                SetArrayRegion(env, SafeDereference(env, array), start, buf);
                }
        };
 
@@ -76,13 +93,19 @@ namespace jni
 
             jsize Length(JNIEnv& env) const
                {
-                return GetArrayLength(env, array);
+                return GetArrayLength(env, SafeDereference(env, array));
                }
 
             ElementType Get(JNIEnv& env, jsize index) const
                {
                 return ElementType(
-                    reinterpret_cast<UntaggedElementType*>(GetObjectArrayElement(env, array, index)));
+                    reinterpret_cast<UntaggedElementType*>(
+                        GetObjectArrayElement(env, SafeDereference(env, array), index)));
+               }
+
+            void Set(JNIEnv& env, jsize index, const ElementType& value)
+               {
+                SetObjectArrayElement(env, SafeDereference(env, array), index, Untag(value));
                }
        };
 
@@ -90,8 +113,9 @@ namespace jni
     template < class T >
     std::vector<T> MakeAnything(ThingToMake<std::vector<T>>, JNIEnv& env, const Array<T>& array)
        {
-        std::vector<T> result(array.Length(env));
-        jni::GetArrayRegion<T>(env, array.Get(), 0, result);
+        NullCheck(env, array.Get());
+        std::vector<T> result(GetArrayLength(env, *array));
+        GetArrayRegion(env, *array, 0, result);
         return result;
        }
 
@@ -99,7 +123,7 @@ namespace jni
     Array<T> MakeAnything(ThingToMake<Array<T>>, JNIEnv& env, const std::vector<T>& array)
        {
         Array<T> result(&NewArray<T>(env, array.size()));
-        jni::SetArrayRegion<T>(env, result.Get(), 0, array);
+        SetArrayRegion(env, *result, 0, array);
         return result;
        }
    }

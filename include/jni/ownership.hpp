@@ -60,7 +60,7 @@ namespace jni
 
         public:
             StringCharsDeleter() = default;
-            StringCharsDeleter(JNIEnv& e, jstring* s) : env(&e), string(s) {}
+            StringCharsDeleter(JNIEnv& e, jstring& s) : env(&e), string(&s) {}
 
             void operator()(const char16_t* p) const
                {
@@ -84,7 +84,7 @@ namespace jni
 
         public:
             StringUTFCharsDeleter() = default;
-            StringUTFCharsDeleter(JNIEnv& e, jstring* s) : env(&e), string(s) {}
+            StringUTFCharsDeleter(JNIEnv& e, jstring& s) : env(&e), string(&s) {}
 
             void operator()(const char* p) const
                {
@@ -108,7 +108,7 @@ namespace jni
 
         public:
             StringCriticalDeleter() = default;
-            StringCriticalDeleter(JNIEnv& e, jstring* s) : env(&e), string(s) {}
+            StringCriticalDeleter(JNIEnv& e, jstring& s) : env(&e), string(&s) {}
 
             void operator()(const char16_t* p) const
                {
@@ -133,7 +133,7 @@ namespace jni
 
         public:
             ArrayElementsDeleter() = default;
-            ArrayElementsDeleter(JNIEnv& e, jarray<E>* a) : env(&e), array(a) {}
+            ArrayElementsDeleter(JNIEnv& e, jarray<E>& a) : env(&e), array(&a) {}
 
             void operator()(E** p) const
                {
@@ -159,7 +159,7 @@ namespace jni
 
         public:
             PrimitiveArrayCriticalDeleter() = default;
-            PrimitiveArrayCriticalDeleter(JNIEnv& e, jarray<E>* a) : env(&e), array(a) {}
+            PrimitiveArrayCriticalDeleter(JNIEnv& e, jarray<E>& a) : env(&e), array(&a) {}
 
             void operator()(void* p) const
                {
