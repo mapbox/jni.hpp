@@ -70,11 +70,11 @@ static void TestNewAndDeleteGlobalRef()
         env.exception = true;
        };
 
-    assert(objectValue == *jni::NewGlobalRef(env, objectValue.Ref()));
-    assert(classValue == *jni::NewGlobalRef(env, classValue.Ref()));
-    assert(Throws<jni::PendingJavaException>([] { jni::NewGlobalRef(env, failureValue.Ref()); }));
+    assert(objectValue == *jni::NewGlobalRef(env, objectValue.Ptr()));
+    assert(classValue == *jni::NewGlobalRef(env, classValue.Ptr()));
+    assert(Throws<jni::PendingJavaException>([] { jni::NewGlobalRef(env, failureValue.Ptr()); }));
     assert(Throws<jni::PendingJavaException>(
-       [] { jni::DeleteGlobalRef(env, jni::NewGlobalRef(env, failureValue.Ref())); }));
+       [] { jni::DeleteGlobalRef(env, jni::NewGlobalRef(env, failureValue.Ptr())); }));
    }
 
 static void TestNewObject()

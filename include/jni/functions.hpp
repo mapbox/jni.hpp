@@ -126,7 +126,7 @@ namespace jni
 
 
     template < class T >
-    UniqueGlobalRef<T> NewGlobalRef(JNIEnv& env, T& t)
+    UniqueGlobalRef<T> NewGlobalRef(JNIEnv& env, T* t)
        {
         jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t)));
         CheckJavaException(env);

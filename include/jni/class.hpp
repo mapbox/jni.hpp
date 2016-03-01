@@ -63,7 +63,7 @@ namespace jni
 
             Class NewGlobalRef(JNIEnv& env) const
                {
-                return Class(jni::NewGlobalRef(env, clazz));
+                return Class(jni::NewGlobalRef(env, &clazz));
                }
 
             Class Release()

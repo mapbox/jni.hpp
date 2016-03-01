@@ -68,9 +68,13 @@ int main()
     assert(calledNewGlobalRef);
 
 
-    /// Constructor
+    /// Object
 
     jni::Object<Test> object { objectValue.Ptr() };
+    object.NewGlobalRef(env);
+
+
+    /// Constructor
 
     static Testable<jni::jmethodID> defaultConstructorMethodID;
     static Testable<jni::jmethodID> booleanConstructorMethodID;

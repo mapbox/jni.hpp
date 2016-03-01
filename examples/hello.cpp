@@ -8,8 +8,8 @@ static void RegisterLowLevel(JavaVM* vm)
    {
     jni::JNIEnv& env = jni::GetEnv(*vm);
 
-    static jni::jclass* systemClass = jni::NewGlobalRef(env, jni::FindClass(env, "java/lang/System")).release();
-    static jni::jclass* printStreamClass = jni::NewGlobalRef(env, jni::FindClass(env, "java/io/PrintStream")).release();
+    static jni::jclass* systemClass = jni::NewGlobalRef(env, &jni::FindClass(env, "java/lang/System")).release();
+    static jni::jclass* printStreamClass = jni::NewGlobalRef(env, &jni::FindClass(env, "java/io/PrintStream")).release();
 
     static jni::jfieldID& outFieldID = jni::GetStaticFieldID(env, *systemClass, "out", "Ljava/io/PrintStream;");
     static jni::jmethodID& printlnMethodID = jni::GetMethodID(env, *printStreamClass, "println", "(Ljava/lang/String;)V");
