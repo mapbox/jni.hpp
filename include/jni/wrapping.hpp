@@ -82,7 +82,7 @@ namespace jni
     struct ReferenceTypeWrapper
        {
         W* Wrap(U u) const { return reinterpret_cast<W*>(u); }
-        U Unwrap(W* t) const { return reinterpret_cast<U>(t); }
+        U Unwrap(W* w) const { return reinterpret_cast<U>(w); }
        };
 
     template <> struct Wrapper< jobject*    > : ReferenceTypeWrapper< jobject,    ::jobject    > {};
@@ -110,7 +110,7 @@ namespace jni
     template < class W, class U >
     struct ReferenceTypeUnwrapper
        {
-        U Unwrap(W& t) const { return reinterpret_cast<U>(&t); }
+        U Unwrap(W& w) const { return reinterpret_cast<U>(&w); }
        };
 
     template <> struct Wrapper< jobject    > : ReferenceTypeUnwrapper< jobject,    ::jobject    > {};
