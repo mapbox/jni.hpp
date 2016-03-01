@@ -144,6 +144,32 @@ static void TestArrayRegion()
     jni::SetArrayRegion<jni::jboolean>(env, arrayValue.Ref(), 0, 1, &boolean);
    }
 
+namespace
+   {
+    void Method(jni::JNIEnv*, jni::jobject*) {}
+    void StaticMethod(jni::JNIEnv*, jni::jclass*) {}
+
+    struct Struct
+       {
+        static void Method(jni::JNIEnv*, jni::jobject*) {}
+        static void StaticMethod(jni::JNIEnv*, jni::jclass*) {}
+       };
+   }
+
+static void TestMakeNativeMethod()
+   {
+    jni::MakeNativeMethod("name", "sig", Method);
+    jni::MakeNativeMethod("name", "sig", StaticMethod);
+    jni::MakeNativeMethod("name", "sig", &Method);
+    jni::MakeNativeMethod("name", "sig", &StaticMethod);
+    jni::MakeNativeMethod("name", "sig", &Struct::Method);
+    jni::MakeNativeMethod("name", "sig", &Struct::StaticMethod);
+    jni::MakeNativeMethod("name", "sig", [] (jni::JNIEnv*, jni::jobject*) {});
+    jni::MakeNativeMethod("name", "sig", [] (jni::JNIEnv*, jni::jclass*) {});
+    jni::MakeNativeMethod("name", "sig", [] (jni::JNIEnv*, jni::jobject*) mutable {});
+    jni::MakeNativeMethod("name", "sig", [] (jni::JNIEnv*, jni::jclass*) mutable {});
+   }
+
 int main()
    {
     TestGetVersion();
@@ -233,6 +259,8 @@ int main()
     */
 
     TestArrayRegion();
+
+    TestMakeNativeMethod();
 
     /*
         jint        (*RegisterNatives)(JNIEnv*, jclass, const JNINativeMethod*,

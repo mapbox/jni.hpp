@@ -14,27 +14,54 @@
 
 namespace jni
    {
-    template < class T >
-    struct NativeMethodMaker;
-
-
     /// Low-level
 
-    template < class T, class R, class P, class... Args >
-    struct NativeMethodMaker< R (T::*)(JNIEnv*, P*, Args...) const >
+    template < class M >
+    struct NativeMethodMaker
        {
-        template < class M >
+        template < class T >
+        struct Maker;
+
+        template < class T, class R, class P, class... Args >
+        struct Maker< R (T::*)(JNIEnv*, P*, Args...) const >
+           {
+            JNINativeMethod< R (JNIEnv*, P*, Args...) >
+            operator()(const char* name, const char* sig, const M& m)
+               {
+                return { name, sig, m };
+               }
+           };
+
+        template < class T, class R, class P, class... Args >
+        struct Maker< R (T::*)(JNIEnv*, P*, Args...) >
+           {
+            JNINativeMethod< R (JNIEnv*, P*, Args...) >
+            operator()(const char* name, const char* sig, const M& m)
+               {
+                return { name, sig, m };
+               }
+           };
+
+        auto operator()(const char* name, const char* sig, const M& m)
+           {
+            return Maker<decltype(&M::operator())>()(name, sig, m);
+           }
+       };
+
+    template < class R, class P, class... Args >
+    struct NativeMethodMaker< R (*)(JNIEnv*, P*, Args...) >
+       {
         JNINativeMethod< R (JNIEnv*, P*, Args...) >
-        operator()(const char* name, const char* sig, const M& m)
+        operator()(const char* name, const char* sig, R (*m)(JNIEnv*, P*, Args...))
            {
             return { name, sig, m };
            }
        };
 
     template < class M >
-    auto MakeNativeMethod(const char* name, const char* sig, const M& m)
+    auto MakeNativeMethod(const char* name, const char* sig, M&& m)
        {
-        return NativeMethodMaker<decltype(&M::operator())>()(name, sig, m);
+        return NativeMethodMaker< typename std::decay<M>::type >()(name, sig, std::forward<M>(m));
        }
 
 
