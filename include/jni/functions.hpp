@@ -49,16 +49,16 @@ namespace jni
             Wrap<jfieldID*>(env.FromReflectedField(Unwrap(obj))));
        }
 
-    inline jobject& ToReflectedMethod(JNIEnv& env, jclass& clazz, jmethodID& method, jboolean isStatic)
+    inline jobject& ToReflectedMethod(JNIEnv& env, jclass& clazz, jmethodID& method, bool isStatic)
        {
         return *CheckJavaException(env,
-            Wrap<jobject*>(env.ToReflectedMethod(Unwrap(clazz), Unwrap(method), Unwrap(isStatic))));
+            Wrap<jobject*>(env.ToReflectedMethod(Unwrap(clazz), Unwrap(method), isStatic)));
        }
 
-    inline jobject& ToReflectedField(JNIEnv& env, jclass& clazz, jfieldID& field, jboolean isStatic)
+    inline jobject& ToReflectedField(JNIEnv& env, jclass& clazz, jfieldID& field, bool isStatic)
        {
         return *CheckJavaException(env,
-            Wrap<jobject*>(env.ToReflectedField(Unwrap(clazz), Unwrap(field), Unwrap(isStatic))));
+            Wrap<jobject*>(env.ToReflectedField(Unwrap(clazz), Unwrap(field), isStatic)));
        }
 
 
@@ -68,10 +68,10 @@ namespace jni
             Wrap<jclass*>(env.GetSuperclass(Unwrap(clazz))));
        }
 
-    inline jboolean IsAssignableFrom(JNIEnv& env, jclass& clazz1, jclass& clazz2)
+    inline bool IsAssignableFrom(JNIEnv& env, jclass& clazz1, jclass& clazz2)
        {
         return CheckJavaException(env,
-            Wrap<jboolean>(env.IsAssignableFrom(Unwrap(clazz1), Unwrap(clazz2))));
+            env.IsAssignableFrom(Unwrap(clazz1), Unwrap(clazz2)));
        }
 
 
@@ -87,7 +87,7 @@ namespace jni
         throw PendingJavaException();
        }
 
-    inline jboolean ExceptionCheck(JNIEnv& env)
+    inline bool ExceptionCheck(JNIEnv& env)
        {
         return env.ExceptionCheck();
        }
@@ -175,10 +175,10 @@ namespace jni
        }
 
 
-    inline jboolean IsSameObject(JNIEnv& env, jobject* ref1, jobject* ref2)
+    inline bool IsSameObject(JNIEnv& env, jobject* ref1, jobject* ref2)
        {
         return CheckJavaException(env,
-            Wrap<jboolean>(env.IsSameObject(Unwrap(ref1), Unwrap(ref2))));
+            env.IsSameObject(Unwrap(ref1), Unwrap(ref2)));
        }
 
     inline jobject& AllocObject(JNIEnv& env, jclass& clazz)
@@ -200,10 +200,10 @@ namespace jni
             Wrap<jclass*>(env.GetObjectClass(Unwrap(obj))));
        }
 
-    inline jboolean IsInstanceOf(JNIEnv& env, jobject* obj, jclass& clazz)
+    inline bool IsInstanceOf(JNIEnv& env, jobject* obj, jclass& clazz)
        {
         return CheckJavaException(env,
-            Wrap<jboolean>(env.IsInstanceOf(Unwrap(obj), Unwrap(clazz))));
+            env.IsInstanceOf(Unwrap(obj), Unwrap(clazz))) == JNI_TRUE;
        }
 
 
@@ -330,12 +330,12 @@ namespace jni
             Wrap<jsize>(env.GetStringLength(Unwrap(string))));
        }
 
-    inline std::tuple<UniqueStringChars, jboolean> GetStringChars(JNIEnv& env, jstring& string)
+    inline std::tuple<UniqueStringChars, bool> GetStringChars(JNIEnv& env, jstring& string)
        {
         ::jboolean isCopy = JNI_FALSE;
         const char16_t* result = CheckJavaException(env,
             Wrap<const char16_t*>(env.GetStringChars(Unwrap(string), &isCopy)));
-        return std::make_tuple(UniqueStringChars(result, StringCharsDeleter(env, string)), Wrap<jboolean>(isCopy));
+        return std::make_tuple(UniqueStringChars(result, StringCharsDeleter(env, string)), isCopy);
        }
 
     inline void ReleaseStringChars(JNIEnv& env, jstring& string, UniqueStringChars&& chars)
@@ -356,12 +356,12 @@ namespace jni
             Wrap<jsize>(env.GetStringUTFLength(Unwrap(string))));
        }
 
-    inline std::tuple<UniqueStringUTFChars, jboolean> GetStringUTFChars(JNIEnv& env, jstring& string)
+    inline std::tuple<UniqueStringUTFChars, bool> GetStringUTFChars(JNIEnv& env, jstring& string)
        {
         ::jboolean isCopy = JNI_FALSE;
         const char* result = CheckJavaException(env,
             env.GetStringUTFChars(Unwrap(string), &isCopy));
-        return std::make_tuple(UniqueStringUTFChars(result, StringUTFCharsDeleter(env, string)), Wrap<jboolean>(isCopy));
+        return std::make_tuple(UniqueStringUTFChars(result, StringUTFCharsDeleter(env, string)), isCopy);
        }
 
     inline void ReleaseStringUTFChars(JNIEnv& env, jstring& string, UniqueStringUTFChars&& chars)
@@ -396,12 +396,12 @@ namespace jni
         GetStringUTFRegion(env, string, start, ArraylikeSize(buf), ArraylikeData(buf));
        }
 
-    inline std::tuple<UniqueStringCritical, jboolean> GetStringCritical(JNIEnv& env, jstring& string)
+    inline std::tuple<UniqueStringCritical, bool> GetStringCritical(JNIEnv& env, jstring& string)
        {
         ::jboolean isCopy = JNI_FALSE;
         const char16_t* result = CheckJavaException(env,
             Wrap<const char16_t*>(env.GetStringCritical(Unwrap(string), &isCopy)));
-        return std::make_tuple(UniqueStringCritical(result, StringCriticalDeleter(env, string)), Wrap<jboolean>(isCopy));
+        return std::make_tuple(UniqueStringCritical(result, StringCriticalDeleter(env, string)), isCopy);
        }
 
     inline void ReleaseStringCritical(JNIEnv& env, jstring& string, UniqueStringCritical&& chars)
@@ -426,12 +426,12 @@ namespace jni
        }
 
     template < class E >
-    std::tuple<UniqueArrayElements<E>, jboolean> GetArrayElements(JNIEnv& env, jarray<E>& array)
+    std::tuple<UniqueArrayElements<E>, bool> GetArrayElements(JNIEnv& env, jarray<E>& array)
        {
         ::jboolean isCopy = JNI_FALSE;
         E* result = CheckJavaException(env,
             (env.*(TypedMethods<E>::GetArrayElements))(Unwrap(array), &isCopy));
-        return std::make_tuple(UniqueArrayElements<E>(result, ArrayElementsDeleter<E>(env, array)), Wrap<jboolean>(isCopy));
+        return std::make_tuple(UniqueArrayElements<E>(result, ArrayElementsDeleter<E>(env, array)), isCopy);
        }
 
     template < class E >
@@ -449,12 +449,12 @@ namespace jni
        }
 
     template < class E >
-    std::tuple<UniquePrimitiveArrayCritical<E>, jboolean> GetPrimitiveArrayCritical(JNIEnv& env, jarray<E>& array)
+    std::tuple<UniquePrimitiveArrayCritical<E>, bool> GetPrimitiveArrayCritical(JNIEnv& env, jarray<E>& array)
        {
         ::jboolean isCopy = JNI_FALSE;
         void* result = CheckJavaException(env,
             env.GetPrimitiveArrayCritical(Unwrap(array), &isCopy));
-        return std::make_tuple(UniquePrimitiveArrayCritical<E>(result, PrimitiveArrayCriticalDeleter<E>(env, array)), Wrap<jboolean>(isCopy));
+        return std::make_tuple(UniquePrimitiveArrayCritical<E>(result, PrimitiveArrayCriticalDeleter<E>(env, array)), isCopy);
        }
 
     template < class E >
