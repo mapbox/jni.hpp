@@ -128,6 +128,12 @@ namespace jni
                {
                 return Seize(env, Object(jni::NewGlobalRef(env, obj).release()));
                }
+
+            template < class OtherTag >
+            bool IsInstanceOf(JNIEnv& env, const Class<OtherTag>& clazz) const
+               {
+                return jni::IsInstanceOf(env, obj, clazz);
+               }
        };
 
     template < class TagType >
@@ -157,4 +163,15 @@ namespace jni
        {
         return UniqueObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), ObjectDeleter<TagType>(env));
        };
+
+
+    template < class OutTagType, class InTagType >
+    Object<OutTagType> Cast(JNIEnv& env, const Object<InTagType>& object, const Class<OutTagType>& clazz)
+       {
+        if (!object.IsInstanceOf(env, clazz))
+           {
+            ThrowNew(env, FindClass(env, "java/lang/ClassCastException"));
+           }
+        return Object<OutTagType>(object.Get());
+       }
    }
