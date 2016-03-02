@@ -39,7 +39,7 @@ namespace jni
         : FunctionTypeTraits< R (Args...) > {};
 
     template < class M >
-    struct FunctionTypeTraits< M, typename std::enable_if< std::is_class<M>::value >::type >
+    struct FunctionTypeTraits< M, std::enable_if_t< std::is_class<M>::value > >
         : FunctionTypeTraits< decltype(&M::operator()) > {};
 
     template < class M >

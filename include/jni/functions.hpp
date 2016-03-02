@@ -25,7 +25,7 @@ namespace jni
 
     template < class Array >
     auto DefineClass(JNIEnv& env, const char* name, jobject& loader, const Array& buf)
-       -> typename std::enable_if< IsArraylike<Array>::value, jclass& >::type
+       -> std::enable_if_t< IsArraylike<Array>::value, jclass& >
        {
         return DefineClass(env, name, loader, ArraylikeData(buf), ArraylikeSize(buf));
        }
@@ -318,7 +318,7 @@ namespace jni
 
     template < class Array >
     auto NewString(JNIEnv& env, const Array& chars)
-       -> typename std::enable_if< IsArraylike<Array>::value, jstring& >::type
+       -> std::enable_if_t< IsArraylike<Array>::value, jstring& >
        {
         return NewString(env, ArraylikeData(chars), ArraylikeSize(chars));
        }
@@ -377,7 +377,7 @@ namespace jni
 
     template < class Array >
     auto GetStringRegion(JNIEnv& env, jstring& string, jsize start, Array& buf)
-       -> typename std::enable_if< IsArraylike<Array>::value >::type
+       -> std::enable_if_t< IsArraylike<Array>::value >
        {
         GetStringRegion(env, string, start, ArraylikeSize(buf), ArraylikeData(buf));
        }
@@ -390,7 +390,7 @@ namespace jni
 
     template < class Array >
     auto GetStringUTFRegion(JNIEnv& env, jstring& string, jsize start, Array& buf)
-       -> typename std::enable_if< IsArraylike<Array>::value >::type
+       -> std::enable_if_t< IsArraylike<Array>::value >
        {
         GetStringUTFRegion(env, string, start, ArraylikeSize(buf), ArraylikeData(buf));
        }
@@ -479,7 +479,7 @@ namespace jni
 
     template < class T, class Array >
     auto GetArrayRegion(JNIEnv& env, jarray<T>& array, jsize start, Array& buf)
-       -> typename std::enable_if< IsArraylike<Array>::value >::type
+       -> std::enable_if_t< IsArraylike<Array>::value >
        {
         GetArrayRegion(env, array, start, ArraylikeSize(buf), ArraylikeData(buf));
        }
@@ -493,7 +493,7 @@ namespace jni
 
     template < class T, class Array >
     auto SetArrayRegion(JNIEnv& env, jarray<T>& array, jsize start, const Array& buf)
-       -> typename std::enable_if< IsArraylike<Array>::value >::type
+       -> std::enable_if_t< IsArraylike<Array>::value >
        {
         SetArrayRegion(env, array, start, ArraylikeSize(buf), ArraylikeData(buf));
        }

@@ -10,7 +10,7 @@ namespace jni
     template < class E, class Enable = void > class Array;
 
     template < class E >
-    class Array< E, typename std::enable_if<IsPrimitive<E>::value>::type >
+    class Array< E, std::enable_if_t<IsPrimitive<E>::value> >
        {
         public:
             using ElementType = E;
