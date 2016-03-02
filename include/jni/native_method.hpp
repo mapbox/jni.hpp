@@ -91,7 +91,7 @@ namespace jni
 
     /// High-level
 
-    template < class T >
+    template < class T, T... >
     struct NativeMethodMaker;
 
     template < class T, class R, class Subject, class... Args >
@@ -132,6 +132,41 @@ namespace jni
     auto MakeNativeMethod(const char* name, const M& m)
        {
         return NativeMethodMaker<decltype(&M::operator())>()(name, m);
+       }
+
+    template < class R, class Subject, class... Args, R (*method)(JNIEnv&, Subject, Args...) >
+    struct NativeMethodMaker< R (JNIEnv&, Subject, Args...), method >
+       {
+        auto operator()(const char* name)
+           {
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
+               {
+                return Untag(method(*env, Tag<Subject>(*subject), Tag<Args>(args)...));
+               };
+
+            return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
+           }
+       };
+
+    template < class Subject, class... Args, void (*method)(JNIEnv&, Subject, Args...) >
+    struct NativeMethodMaker< void (JNIEnv&, Subject, Args...), method >
+       {
+        auto operator()(const char* name)
+           {
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
+               {
+                method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
+               };
+
+            return MakeNativeMethod(name, TypeSignature<void (Args...)>()(), wrapper);
+           }
+       };
+
+    template < class M, M method >
+    auto MakeNativeMethod(const char* name)
+       {
+        using FunctionType = typename FunctionTypeTraits<M>::Type;
+        return NativeMethodMaker<FunctionType, method>()(name);
        }
 
 

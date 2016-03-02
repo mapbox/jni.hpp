@@ -5,6 +5,14 @@
 #include <cassert>
 #include <iostream>
 
+namespace
+   {
+    struct Test { static constexpr auto Name() { return "mapbox/com/Test"; } };
+
+    void Method(jni::JNIEnv&, jni::Object<Test>) {}
+    int StaticMethod(jni::JNIEnv&, jni::Class<Test>) { return 0; }
+   }
+
 int main()
    {
     /// TypeSignature
@@ -37,7 +45,6 @@ int main()
 
     /// Class
 
-    struct Test { static constexpr auto Name() { return "mapbox/com/Test"; } };
     static TestEnv env;
 
     static Testable<jni::jclass> classValue;
@@ -663,6 +670,12 @@ int main()
 
     std::vector<jboolean> vec = { jni::jni_true };
     assert(jni::Make<std::vector<jboolean>>(env, jni::Make<jni::Array<jni::jboolean>>(env, vec)) == vec);
+
+
+    jni::MakeNativeMethod<decltype(Method), Method>("name");
+    jni::MakeNativeMethod<decltype(StaticMethod), StaticMethod>("name");
+    jni::MakeNativeMethod<decltype(&Method), &Method>("name");
+    jni::MakeNativeMethod<decltype(&StaticMethod), &StaticMethod>("name");
 
 
     static JNINativeMethod methods[3];
