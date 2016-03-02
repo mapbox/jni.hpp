@@ -4,10 +4,18 @@
 #include <jni/object.hpp>
 #include <jni/tagging.hpp>
 #include <jni/make.hpp>
+#include <jni/pointer_to_value.hpp>
 
 namespace jni
    {
-    template < class E, class Enable = void > class Array;
+    template < class E, class Enable = void >
+    class Array;
+
+    template < class TagType >
+    class ArrayDeleter;
+
+    template < class E >
+    using UniqueArray = std::unique_ptr< const Array<E>, ArrayDeleter<E> >;
 
     template < class E >
     class Array< E, std::enable_if_t<IsPrimitive<E>::value> >
@@ -17,7 +25,6 @@ namespace jni
             using UntaggedType = jarray<E>;
 
         private:
-            UniqueGlobalRef<UntaggedType> reference;
             UntaggedType* array = nullptr;
 
         public:
@@ -25,14 +32,13 @@ namespace jni
                : array(a)
                {}
 
-            explicit Array(UniqueGlobalRef<UntaggedType>&& r)
-               : reference(std::move(r)),
-                 array(reference.get())
-               {}
-
             explicit operator bool() const { return array; }
+
             UntaggedType& operator*() const { return *array; }
             UntaggedType* Get() const { return array; }
+
+            friend bool operator==( const Array& a, const Array& b )  { return a.Get() == b.Get(); }
+            friend bool operator!=( const Array& a, const Array& b )  { return !( a == b ); }
 
             jsize Length(JNIEnv& env) const
                {
@@ -67,6 +73,11 @@ namespace jni
                {
                 return Array<E>(&NewArray<E>(env, length));
                }
+
+            UniqueArray<E> NewGlobalRef(JNIEnv& env) const
+               {
+                return Seize(env, Array(jni::NewGlobalRef(env, array).release()));
+               }
        };
 
     template < class TheTag >
@@ -79,7 +90,6 @@ namespace jni
             using UntaggedElementType = typename ElementType::UntaggedObjectType;
 
         private:
-            UniqueGlobalRef<UntaggedType> reference;
             UntaggedType* array = nullptr;
 
         public:
@@ -87,14 +97,13 @@ namespace jni
                : array(a)
                {}
 
-            explicit Array(UniqueGlobalRef<UntaggedType>&& r)
-               : reference(std::move(r)),
-                 array(reference.get())
-               {}
-
             explicit operator bool() const { return array; }
+
             UntaggedType& operator*() const { return *array; }
             UntaggedType* Get() const { return array; }
+
+            friend bool operator==( const Array& a, const Array& b )  { return a.Get() == b.Get(); }
+            friend bool operator!=( const Array& a, const Array& b )  { return !( a == b ); }
 
             jsize Length(JNIEnv& env) const
                {
@@ -117,6 +126,39 @@ namespace jni
                {
                 return Array<Object<TheTag>>(&NewObjectArray(env, length, clazz, initialElement.Get()));
                }
+
+            UniqueArray<Object<TheTag>> NewGlobalRef(JNIEnv& env) const
+               {
+                return Seize(env, Array(jni::NewGlobalRef(env, array).release()));
+               }
+      };
+
+    template < class E >
+    class ArrayDeleter
+       {
+        private:
+            JNIEnv* env = nullptr;
+
+        public:
+            using pointer = PointerToValue< Array<E> >;
+
+            ArrayDeleter() = default;
+            ArrayDeleter(JNIEnv& e) : env(&e) {}
+
+            void operator()(pointer p) const
+               {
+                if (p)
+                   {
+                    assert(env);
+                    env->DeleteGlobalRef(Unwrap(p->Get()));
+                   }
+               }
+       };
+
+    template < class E >
+    UniqueArray<E> Seize(JNIEnv& env, Array<E>&& array)
+       {
+        return UniqueArray<E>(PointerToValue<Array<E>>(std::move(array)), ArrayDeleter<E>(env));
        };
 
 

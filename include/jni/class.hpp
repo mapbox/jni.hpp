@@ -2,6 +2,7 @@
 
 #include <jni/functions.hpp>
 #include <jni/tagging.hpp>
+#include <jni/pointer_to_value.hpp>
 
 namespace jni
    {
@@ -13,89 +14,91 @@ namespace jni
     template < class TheTag, class > class StaticMethod;
 
     template < class TheTag >
+    class Class;
+
+    template < class TagType >
+    class ClassDeleter;
+
+    template < class TagType >
+    using UniqueClass = std::unique_ptr< const Class<TagType>, ClassDeleter<TagType> >;
+
+    template < class TheTag >
     class Class
        {
         private:
-            UniqueGlobalRef<jclass> reference;
-            jclass& clazz;
+            jclass* clazz = nullptr;
 
         public:
             using TagType = TheTag;
 
+            explicit Class(std::nullptr_t = nullptr)
+               {}
+
             explicit Class(jclass& c)
-               : clazz(c)
+               : clazz(&c)
                {}
 
-            explicit Class(UniqueGlobalRef<jclass>&& r)
-               : reference(std::move(r)),
-                 clazz(*reference)
-               {}
+            explicit operator bool() const { return clazz; }
 
-            operator jclass&() const { return clazz; }
-            jclass* Get() const { return &clazz; }
+            operator jclass&() const { return *clazz; }
+            jclass& operator*() const { return *clazz; }
+            jclass* Get() const { return clazz; }
+
+            friend bool operator==( const Class& a, const Class& b )  { return a.Get() == b.Get(); }
+            friend bool operator!=( const Class& a, const Class& b )  { return !( a == b ); }
 
             template < class... Args >
             Object<TagType> New(JNIEnv& env, const Constructor<TagType, Args...>& method, const Args&... args) const
                {
-                return Object<TagType>(&NewObject(env, clazz, method, Untag(args)...));
+                return Object<TagType>(&NewObject(env, *clazz, method, Untag(args)...));
                }
 
             template < class T >
             auto Get(JNIEnv& env, const StaticField<TagType, T>& field) const
                -> std::enable_if_t< IsPrimitive<T>::value, T >
                {
-                return jni::GetStaticField<T>(env, clazz, field);
+                return jni::GetStaticField<T>(env, *clazz, field);
                }
 
             template < class T >
             auto Get(JNIEnv& env, const StaticField<TagType, T>& field) const
                -> std::enable_if_t< !IsPrimitive<T>::value, T >
                {
-                return T(reinterpret_cast<UntaggedType<T>>(jni::GetStaticField<jobject*>(env, clazz, field)));
+                return T(reinterpret_cast<UntaggedType<T>>(jni::GetStaticField<jobject*>(env, *clazz, field)));
                }
 
             template < class T >
             auto Set(JNIEnv& env, const StaticField<TagType, T>& field, T value) const
                -> std::enable_if_t< IsPrimitive<T>::value >
                {
-                SetStaticField<T>(env, clazz, field, value);
+                SetStaticField<T>(env, *clazz, field, value);
                }
 
             template < class T >
             auto Set(JNIEnv& env, const StaticField<TagType, T>& field, const T& value) const
                -> std::enable_if_t< !IsPrimitive<T>::value >
                {
-                SetStaticField<jobject*>(env, clazz, field, value.Get());
+                SetStaticField<jobject*>(env, *clazz, field, value.Get());
                }
 
             template < class R, class... Args >
             auto Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
-                return CallStaticMethod<R>(env, clazz, method, Untag(args)...);
+                return CallStaticMethod<R>(env, *clazz, method, Untag(args)...);
                }
 
             template < class R, class... Args >
             auto Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< !IsPrimitive<R>::value, R >
                {
-                return R(reinterpret_cast<UntaggedType<R>>(CallStaticMethod<jobject*>(env, clazz, method, Untag(args)...)));
+                return R(reinterpret_cast<UntaggedType<R>>(CallStaticMethod<jobject*>(env, *clazz, method, Untag(args)...)));
                }
 
             template < class... Args >
             void Call(JNIEnv& env, const StaticMethod<TagType, void (Args...)>& method, const Args&... args) const
                {
-                CallStaticMethod<void>(env, clazz, method, Untag(args)...);
-               }
-
-            Class NewGlobalRef(JNIEnv& env) const
-               {
-                return Class(jni::NewGlobalRef(env, &clazz));
-               }
-
-            Class Release()
-               {
-                return Class(*reference.release());
+                CallStaticMethod<void>(env, *clazz, method, Untag(args)...);
                }
 
             static Class Find(JNIEnv& env)
@@ -132,5 +135,38 @@ namespace jni
                {
                 return StaticMethod<TagType, T>(env, *this, name);
                }
+
+            UniqueClass<TagType> NewGlobalRef(JNIEnv& env) const
+               {
+                return Seize(env, Class(*jni::NewGlobalRef(env, clazz).release()));
+               }
+       };
+
+    template < class TagType >
+    class ClassDeleter
+       {
+        private:
+            JNIEnv* env = nullptr;
+
+        public:
+            using pointer = PointerToValue< Class<TagType> >;
+
+            ClassDeleter() = default;
+            ClassDeleter(JNIEnv& e) : env(&e) {}
+
+            void operator()(pointer p) const
+               {
+                if (p)
+                   {
+                    assert(env);
+                    env->DeleteGlobalRef(Unwrap(p->Get()));
+                   }
+               }
+       };
+
+    template < class TagType >
+    UniqueClass<TagType> Seize(JNIEnv& env, Class<TagType>&& clazz)
+       {
+        return UniqueClass<TagType>(PointerToValue<Class<TagType>>(std::move(clazz)), ClassDeleter<TagType>(env));
        };
    }

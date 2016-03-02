@@ -2,6 +2,7 @@
 
 #include <jni/functions.hpp>
 #include <jni/tagging.hpp>
+#include <jni/pointer_to_value.hpp>
 
 #include <cstddef>
 
@@ -16,6 +17,15 @@ namespace jni
     template < class TagType >
     struct UntaggedObjectType { using Type = jobject; };
 
+    template < class TheTag >
+    class Object;
+
+    template < class TagType >
+    class ObjectDeleter;
+
+    template < class TagType >
+    using UniqueObject = std::unique_ptr< const Object<TagType>, ObjectDeleter<TagType> >;
+
     template < class TheTag = ObjectTag >
     class Object
        {
@@ -24,7 +34,6 @@ namespace jni
             using UntaggedObjectType = typename UntaggedObjectType<TagType>::Type;
 
         private:
-            UniqueGlobalRef<UntaggedObjectType> reference;
             UntaggedObjectType* obj = nullptr;
 
         public:
@@ -39,14 +48,13 @@ namespace jni
                : obj(&o)
                {}
 
-            explicit Object(UniqueGlobalRef<UntaggedObjectType>&& r)
-               : reference(std::move(r)),
-                 obj(reference.get())
-               {}
-
             explicit operator bool() const { return obj; }
+
             UntaggedObjectType& operator*() const { return *obj; }
             UntaggedObjectType* Get() const { return obj; }
+
+            friend bool operator==( const Object& a, const Object& b )  { return a.Get() == b.Get(); }
+            friend bool operator!=( const Object& a, const Object& b )  { return !( a == b ); }
 
             template < class T >
             auto Get(JNIEnv& env, const Field<TagType, T>& field) const
@@ -116,14 +124,37 @@ namespace jni
                 CallNonvirtualMethod<void>(env, obj, clazz, method, Untag(args)...);
                }
 
-            Object NewGlobalRef(JNIEnv& env) const
+            UniqueObject<TagType> NewGlobalRef(JNIEnv& env) const
                {
-                return Object(jni::NewGlobalRef(env, obj));
+                return Seize(env, Object(jni::NewGlobalRef(env, obj).release()));
                }
+       };
 
-            Object Release()
+    template < class TagType >
+    class ObjectDeleter
+       {
+        private:
+            JNIEnv* env = nullptr;
+
+        public:
+            using pointer = PointerToValue< Object<TagType> >;
+
+            ObjectDeleter() = default;
+            ObjectDeleter(JNIEnv& e) : env(&e) {}
+
+            void operator()(pointer p) const
                {
-                return Object(reference.release());
+                if (p)
+                   {
+                    assert(env);
+                    env->DeleteGlobalRef(Unwrap(p->Get()));
+                   }
                }
+       };
+
+    template < class TagType >
+    UniqueObject<TagType> Seize(JNIEnv& env, Object<TagType>&& object)
+       {
+        return UniqueObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), ObjectDeleter<TagType>(env));
        };
    }
