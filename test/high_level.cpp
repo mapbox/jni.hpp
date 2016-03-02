@@ -127,9 +127,9 @@ int main()
         return jni::Unwrap(objectValue.Ptr());
        };
 
-    jni::Constructor<Test>                    defaultNew { env, testClass };
-    jni::Constructor<Test, jni::jboolean>     booleanNew { env, testClass };
-    jni::Constructor<Test, jni::Object<Test>> objectNew  { env, testClass };
+    auto defaultNew = testClass.GetConstructor(env);
+    auto booleanNew = testClass.GetConstructor<jni::jboolean>(env);
+    auto objectNew  = testClass.GetConstructor<jni::Object<Test>>(env);
 
     assert(testClass.New(env, defaultNew).Get() == object.Get());
     assert(testClass.New(env, booleanNew, jni::jni_true).Get() == object.Get());
@@ -185,8 +185,8 @@ int main()
         assert(value == jni::Unwrap(objectValue.Ptr()));
        };
 
-    jni::StaticField<Test, jni::jboolean>     booleanStaticField { env, testClass, booleanFieldName };
-    jni::StaticField<Test, jni::Object<Test>> objectStaticField  { env, testClass, objectFieldName };
+    auto booleanStaticField = testClass.GetStaticField<jni::jboolean>(env, booleanFieldName);
+    auto objectStaticField  = testClass.GetStaticField<jni::Object<Test>>(env, objectFieldName);
 
     assert(testClass.Get(env, booleanStaticField) == jni::jni_true);
     assert(testClass.Get(env, objectStaticField).Get() == object.Get());
@@ -226,8 +226,8 @@ int main()
         assert(value == jni::Unwrap(objectValue.Ptr()));
        };
 
-    jni::Field<Test, jni::jboolean>     booleanField { env, testClass, booleanFieldName };
-    jni::Field<Test, jni::Object<Test>> objectField  { env, testClass, objectFieldName };
+    auto booleanField = testClass.GetField<jni::jboolean>(env, booleanFieldName);
+    auto objectField  = testClass.GetField<jni::Object<Test>>(env, objectFieldName);
     assert(object.Get(env, booleanField) == true);
     assert(object.Get(env, objectField).Get() == object.Get());
     object.Set(env, booleanField, jni::jni_false);
@@ -325,9 +325,9 @@ int main()
         va_end(args);
        };
 
-    jni::StaticMethod<Test, void ()>                  voidVoidStaticMethod     { env, testClass, voidMethodName };
-    jni::StaticMethod<Test, void (jni::jboolean)>     voidBooleanStaticMethod  { env, testClass, voidMethodName };
-    jni::StaticMethod<Test, void (jni::Object<Test>)> voidObjectStaticMethod   { env, testClass, voidMethodName };
+    auto voidVoidStaticMethod    = testClass.GetStaticMethod<void ()>(env, voidMethodName);
+    auto voidBooleanStaticMethod = testClass.GetStaticMethod<void (jni::jboolean)>(env, voidMethodName);
+    auto voidObjectStaticMethod  = testClass.GetStaticMethod<void (jni::Object<Test>)>(env, voidMethodName);
 
     testClass.Call(env, voidVoidStaticMethod);
     testClass.Call(env, voidBooleanStaticMethod, jni::jni_true);
@@ -357,9 +357,9 @@ int main()
         return JNI_TRUE;
        };
 
-    jni::StaticMethod<Test, jni::jboolean ()>                  booleanVoidStaticMethod     { env, testClass, booleanMethodName };
-    jni::StaticMethod<Test, jni::jboolean (jni::jboolean)>     booleanBooleanStaticMethod  { env, testClass, booleanMethodName };
-    jni::StaticMethod<Test, jni::jboolean (jni::Object<Test>)> booleanObjectStaticMethod   { env, testClass, booleanMethodName };
+    auto booleanVoidStaticMethod    = testClass.GetStaticMethod<jni::jboolean ()>(env, booleanMethodName);
+    auto booleanBooleanStaticMethod = testClass.GetStaticMethod<jni::jboolean (jni::jboolean)>(env, booleanMethodName);
+    auto booleanObjectStaticMethod  = testClass.GetStaticMethod<jni::jboolean (jni::Object<Test>)>(env, booleanMethodName);
 
     assert(testClass.Call(env, booleanVoidStaticMethod) == jni::jni_true);
     assert(testClass.Call(env, booleanBooleanStaticMethod, jni::jni_true) == jni::jni_true);
@@ -389,9 +389,9 @@ int main()
         return jni::Unwrap(objectValue.Ptr());
        };
 
-    jni::StaticMethod<Test, jni::Object<Test> ()>                  objectVoidStaticMethod     { env, testClass, objectMethodName };
-    jni::StaticMethod<Test, jni::Object<Test> (jni::jboolean)>     objectBooleanStaticMethod  { env, testClass, objectMethodName };
-    jni::StaticMethod<Test, jni::Object<Test> (jni::Object<Test>)> objectObjectStaticMethod   { env, testClass, objectMethodName };
+    auto objectVoidStaticMethod    = testClass.GetStaticMethod<jni::Object<Test> ()>(env, objectMethodName);
+    auto objectBooleanStaticMethod = testClass.GetStaticMethod<jni::Object<Test> (jni::jboolean)>(env, objectMethodName);
+    auto objectObjectStaticMethod  = testClass.GetStaticMethod<jni::Object<Test> (jni::Object<Test>)>(env, objectMethodName);
 
     assert(testClass.Call(env, objectVoidStaticMethod).Get() == object.Get());
     assert(testClass.Call(env, objectBooleanStaticMethod, jni::jni_true).Get() == object.Get());
@@ -425,9 +425,9 @@ int main()
         va_end(args);
        };
 
-    jni::Method<Test, void ()>                  voidVoidMethod     { env, testClass, voidMethodName };
-    jni::Method<Test, void (jni::jboolean)>     voidBooleanMethod  { env, testClass, voidMethodName };
-    jni::Method<Test, void (jni::Object<Test>)> voidObjectMethod   { env, testClass, voidMethodName };
+    auto voidVoidMethod    = testClass.GetMethod<void ()>(env, voidMethodName);
+    auto voidBooleanMethod = testClass.GetMethod<void (jni::jboolean)>(env, voidMethodName);
+    auto voidObjectMethod  = testClass.GetMethod<void (jni::Object<Test>)>(env, voidMethodName);
 
     object.Call(env, voidVoidMethod);
     object.Call(env, voidBooleanMethod, jni::jni_true);
@@ -457,9 +457,9 @@ int main()
         return JNI_TRUE;
        };
 
-    jni::Method<Test, jni::jboolean ()>                  booleanVoidMethod     { env, testClass, booleanMethodName };
-    jni::Method<Test, jni::jboolean (jni::jboolean)>     booleanBooleanMethod  { env, testClass, booleanMethodName };
-    jni::Method<Test, jni::jboolean (jni::Object<Test>)> booleanObjectMethod   { env, testClass, booleanMethodName };
+    auto booleanVoidMethod    = testClass.GetMethod<jni::jboolean ()>(env, booleanMethodName);
+    auto booleanBooleanMethod = testClass.GetMethod<jni::jboolean (jni::jboolean)>(env, booleanMethodName);
+    auto booleanObjectMethod  = testClass.GetMethod<jni::jboolean (jni::Object<Test>)>(env, booleanMethodName);
 
     assert(object.Call(env, booleanVoidMethod) == jni::jni_true);
     assert(object.Call(env, booleanBooleanMethod, jni::jni_true) == jni::jni_true);
@@ -489,9 +489,9 @@ int main()
         return jni::Unwrap(objectValue.Ptr());
        };
 
-    jni::Method<Test, jni::Object<Test> ()>                  objectVoidMethod     { env, testClass, objectMethodName };
-    jni::Method<Test, jni::Object<Test> (jni::jboolean)>     objectBooleanMethod  { env, testClass, objectMethodName };
-    jni::Method<Test, jni::Object<Test> (jni::Object<Test>)> objectObjectMethod   { env, testClass, objectMethodName };
+    auto objectVoidMethod    = testClass.GetMethod<jni::Object<Test> ()>(env, objectMethodName);
+    auto objectBooleanMethod = testClass.GetMethod<jni::Object<Test> (jni::jboolean)>(env, objectMethodName);
+    auto objectObjectMethod  = testClass.GetMethod<jni::Object<Test> (jni::Object<Test>)>(env, objectMethodName);
 
     assert(object.Call(env, objectVoidMethod).Get() == object.Get());
     assert(object.Call(env, objectBooleanMethod, jni::jni_true).Get() == object.Get());

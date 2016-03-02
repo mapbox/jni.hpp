@@ -7,7 +7,9 @@ namespace jni
    {
     template < class TheTag > class Object;
     template < class TheTag, class... > class Constructor;
+    template < class TheTag, class > class Field;
     template < class TheTag, class > class StaticField;
+    template < class TheTag, class > class Method;
     template < class TheTag, class > class StaticMethod;
 
     template < class TheTag >
@@ -41,7 +43,7 @@ namespace jni
             template < class T >
             T Get(JNIEnv& env, const StaticField<TagType, T>& field) const
                {
-                return Tag<T>(GetStaticField<UntaggedType<T>>(env, clazz, field));
+                return Tag<T>(jni::GetStaticField<UntaggedType<T>>(env, clazz, field));
                }
 
             template < class T >
@@ -75,6 +77,36 @@ namespace jni
             static Class Find(JNIEnv& env)
                {
                 return Class(FindClass(env, TagType::Name()));
+               }
+
+            template < class... Args >
+            Constructor<TagType, Args...> GetConstructor(JNIEnv& env)
+               {
+                return Constructor<TagType, Args...>(env, *this);
+               }
+
+            template < class T >
+            Field<TagType, T> GetField(JNIEnv& env, const char* name)
+               {
+                return Field<TagType, T>(env, *this, name);
+               }
+
+            template < class T >
+            StaticField<TagType, T> GetStaticField(JNIEnv& env, const char* name)
+               {
+                return StaticField<TagType, T>(env, *this, name);
+               }
+
+            template < class T >
+            Method<TagType, T> GetMethod(JNIEnv& env, const char* name)
+               {
+                return Method<TagType, T>(env, *this, name);
+               }
+
+            template < class T >
+            StaticMethod<TagType, T> GetStaticMethod(JNIEnv& env, const char* name)
+               {
+                return StaticMethod<TagType, T>(env, *this, name);
                }
        };
    }

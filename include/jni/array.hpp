@@ -62,6 +62,11 @@ namespace jni
                {
                 SetArrayRegion(env, SafeDereference(env, array), start, buf);
                }
+
+            static Array<E> New(JNIEnv& env, jsize length)
+               {
+                return Array<E>(&NewArray<E>(env, length));
+               }
        };
 
     template < class TheTag >
@@ -106,6 +111,11 @@ namespace jni
             void Set(JNIEnv& env, jsize index, const ElementType& value)
                {
                 SetObjectArrayElement(env, SafeDereference(env, array), index, Untag(value));
+               }
+
+            static Array<Object<TheTag>> New(JNIEnv& env, jsize length, const Class<TheTag>& clazz, const Object<TheTag>& initialElement = Object<TheTag>())
+               {
+                return Array<Object<TheTag>>(&NewObjectArray(env, length, clazz, initialElement.Get()));
                }
        };
 
