@@ -43,7 +43,8 @@ namespace jni
         : FunctionTypeTraits< decltype(&M::operator()) > {};
 
     template < class M >
-    auto MakeNativeMethod(const char* name, const char* sig, const M& m)
+    auto MakeNativeMethod(const char* name, const char* sig, const M& m,
+                          std::enable_if_t< std::is_class<M>::value >* = 0)
        {
         using FunctionType = typename FunctionTypeTraits<M>::Type;
         using ResultType = typename FunctionTypeTraits<M>::ResultType;

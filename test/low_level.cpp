@@ -158,6 +158,15 @@ namespace
 
 static void TestMakeNativeMethod()
    {
+   // None of these should compile:
+//    jni::MakeNativeMethod("name", "sig", Method                );
+//    jni::MakeNativeMethod("name", "sig", StaticMethod          );
+//    jni::MakeNativeMethod("name", "sig", &Method               );
+//    jni::MakeNativeMethod("name", "sig", &StaticMethod         );
+//    jni::MakeNativeMethod("name", "sig", &Struct::Method       );
+//    jni::MakeNativeMethod("name", "sig", &Struct::StaticMethod );
+//    jni::MakeNativeMethod("name", "sig", Struct() );
+
     jni::MakeNativeMethod< decltype(Method),                Method                >("name", "sig");
     jni::MakeNativeMethod< decltype(StaticMethod),          StaticMethod          >("name", "sig");
     jni::MakeNativeMethod< decltype(&Method),               &Method               >("name", "sig");
