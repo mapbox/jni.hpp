@@ -500,7 +500,7 @@ namespace jni
        }
 
 
-    inline jarray<jobject>& NewObjectArray(JNIEnv& env, jsize length, jclass& elementClass, jobject* initialElement)
+    inline jarray<jobject>& NewObjectArray(JNIEnv& env, jsize length, jclass& elementClass, jobject* initialElement = nullptr)
        {
         return *CheckJavaException(env,
             Wrap<jarray<jobject>*>(env.NewObjectArray(Unwrap(length), Unwrap(elementClass), Unwrap(initialElement))));
