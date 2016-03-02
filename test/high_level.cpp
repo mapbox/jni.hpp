@@ -49,6 +49,7 @@ int main()
 
     static Testable<jni::jclass> classValue;
     static Testable<jni::jobject> objectValue;
+    static Testable<jni::jstring> stringValue;
 
     env.functions->FindClass = [] (JNIEnv*, const char* name) -> jclass
        {
@@ -79,6 +80,9 @@ int main()
 
     jni::Object<Test> object { objectValue.Ptr() };
     object.NewGlobalRef(env);
+
+    jni::String string { stringValue.Ptr() };
+    string.NewGlobalRef(env);
 
 
     /// Constructor
@@ -140,8 +144,10 @@ int main()
 
     static Testable<jni::jfieldID> booleanFieldID;
     static Testable<jni::jfieldID> objectFieldID;
+    static Testable<jni::jfieldID> stringFieldID;
     static const char * booleanFieldName = "boolean";
     static const char * objectFieldName = "object";
+    static const char * stringFieldName = "string";
 
     env.functions->GetStaticFieldID = [] (JNIEnv*, jclass, const char* name, const char* sig) -> jfieldID
        {
@@ -150,10 +156,19 @@ int main()
             assert(sig == std::string("Z"));
             return jni::Unwrap(booleanFieldID.Ptr());
            }
-        else
+        else if (name == objectFieldName)
            {
             assert(sig == std::string("Lmapbox/com/Test;"));
             return jni::Unwrap(objectFieldID.Ptr());
+           }
+        else if (name == stringFieldName)
+           {
+            assert(sig == std::string("Ljava/lang/String;"));
+            return jni::Unwrap(stringFieldID.Ptr());
+           }
+        else
+           {
+            abort();
            }
        };
 
@@ -208,8 +223,18 @@ int main()
     env.functions->GetObjectField = [] (JNIEnv*, jobject obj, jfieldID field) -> jobject
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
-        assert(field == jni::Unwrap(objectFieldID.Ptr()));
-        return jni::Unwrap(objectValue.Ptr());
+        if (field == jni::Unwrap(objectFieldID.Ptr()))
+           {
+            return jni::Unwrap(objectValue.Ptr());
+           }
+        else if (field == jni::Unwrap(stringFieldID.Ptr()))
+           {
+            return jni::Unwrap(stringValue.Ptr());
+           }
+        else
+           {
+            abort();
+           }
        };
 
     env.functions->SetBooleanField = [] (JNIEnv*, jobject obj, jfieldID field, jboolean value)
@@ -222,16 +247,31 @@ int main()
     env.functions->SetObjectField = [] (JNIEnv*, jobject obj, jfieldID field, jobject value)
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
-        assert(field == jni::Unwrap(objectFieldID.Ptr()));
-        assert(value == jni::Unwrap(objectValue.Ptr()));
+        if (field == jni::Unwrap(objectFieldID.Ptr()))
+           {
+            assert(value == jni::Unwrap(objectValue.Ptr()));
+           }
+        else if (field == jni::Unwrap(stringFieldID.Ptr()))
+           {
+            assert(value == jni::Unwrap(stringValue.Ptr()));
+           }
+        else
+           {
+            abort();
+           }
        };
 
     auto booleanField = testClass.GetField<jni::jboolean>(env, booleanFieldName);
     auto objectField  = testClass.GetField<jni::Object<Test>>(env, objectFieldName);
+    auto stringField  = testClass.GetField<jni::String>(env, stringFieldName);
+
     assert(object.Get(env, booleanField) == true);
     assert(object.Get(env, objectField).Get() == object.Get());
+    assert(object.Get(env, stringField).Get() == string.Get());
+
     object.Set(env, booleanField, jni::jni_false);
     object.Set(env, objectField, object);
+    object.Set(env, stringField, string);
 
 
     /// StaticMethod
@@ -616,22 +656,20 @@ int main()
 
     /// Make
 
-    static Testable<jni::jstring> stringValue;
-
     env.functions->NewString = [] (JNIEnv*, const jchar*, jsize) -> jstring
        {
         return jni::Unwrap(stringValue.Ptr());
        };
 
-    env.functions->GetStringLength = [] (JNIEnv*, jstring string) -> jsize
+    env.functions->GetStringLength = [] (JNIEnv*, jstring str) -> jsize
        {
-        assert(string == jni::Unwrap(stringValue.Ptr()));
+        assert(str == jni::Unwrap(stringValue.Ptr()));
         return 5;
        };
 
-    env.functions->GetStringRegion = [] (JNIEnv*, jstring string, jsize start, jsize len, jchar* buf)
+    env.functions->GetStringRegion = [] (JNIEnv*, jstring str, jsize start, jsize len, jchar* buf)
        {
-        assert(string == jni::Unwrap(stringValue.Ptr()));
+        assert(str == jni::Unwrap(stringValue.Ptr()));
         assert(start == 0);
         assert(len == 5);
         std::u16string(u"hello").copy(jni::Wrap<char16_t*>(buf), jni::Wrap<std::size_t>(len));

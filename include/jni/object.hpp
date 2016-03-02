@@ -49,21 +49,45 @@ namespace jni
             UntaggedObjectType* Get() const { return obj; }
 
             template < class T >
-            T Get(JNIEnv& env, const Field<TagType, T>& field) const
+            auto Get(JNIEnv& env, const Field<TagType, T>& field) const
+               -> std::enable_if_t< IsPrimitive<T>::value, T >
                {
-                return Tag<T>(GetField<UntaggedType<T>>(env, obj, field));
+                return GetField<T>(env, obj, field);
                }
 
             template < class T >
-            void Set(JNIEnv& env, const Field<TagType, T>& field, const T& value) const
+            auto Get(JNIEnv& env, const Field<TagType, T>& field) const
+               -> std::enable_if_t< !IsPrimitive<T>::value, T >
                {
-                SetField(env, obj, field, Untag(value));
+                return T(reinterpret_cast<UntaggedType<T>>(GetField<jobject*>(env, obj, field)));
+               }
+
+            template < class T >
+            auto Set(JNIEnv& env, const Field<TagType, T>& field, T value) const
+               -> std::enable_if_t< IsPrimitive<T>::value >
+               {
+                SetField<T>(env, obj, field, value);
+               }
+
+            template < class T >
+            auto Set(JNIEnv& env, const Field<TagType, T>& field, const T& value) const
+               -> std::enable_if_t< !IsPrimitive<T>::value >
+               {
+                SetField<jobject*>(env, obj, field, value.Get());
                }
 
             template < class R, class... Args >
-            R Call(JNIEnv& env, const Method<TagType, R (Args...)>& method, const Args&... args) const
+            auto Call(JNIEnv& env, const Method<TagType, R (Args...)>& method, const Args&... args) const
+               -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
-                return Tag<R>(CallMethod<UntaggedType<R>>(env, obj, method, Untag(args)...));
+                return CallMethod<R>(env, obj, method, Untag(args)...);
+               }
+
+            template < class R, class... Args >
+            auto Call(JNIEnv& env, const Method<TagType, R (Args...)>& method, const Args&... args) const
+               -> std::enable_if_t< !IsPrimitive<R>::value, R >
+               {
+                return R(reinterpret_cast<UntaggedType<R>>(CallMethod<jobject*>(env, obj, method, Untag(args)...)));
                }
 
             template < class... Args >
@@ -73,9 +97,17 @@ namespace jni
                }
 
             template < class R, class... Args >
-            R CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, R (Args...)>& method, const Args&... args) const
+            auto CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, R (Args...)>& method, const Args&... args) const
+               -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
-                return Tag<R>(CallNonvirtualMethod<UntaggedType<R>>(env, obj, clazz, method, Untag(args)...));
+                return CallNonvirtualMethod<R>(env, obj, clazz, method, Untag(args)...);
+               }
+
+            template < class R, class... Args >
+            auto CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, R (Args...)>& method, const Args&... args) const
+               -> std::enable_if_t< !IsPrimitive<R>::value, R >
+               {
+                return R(reinterpret_cast<UntaggedType<R>>(CallNonvirtualMethod<jobject*>(env, obj, clazz, method, Untag(args)...)));
                }
 
             template < class... Args >

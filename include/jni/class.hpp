@@ -41,21 +41,45 @@ namespace jni
                }
 
             template < class T >
-            T Get(JNIEnv& env, const StaticField<TagType, T>& field) const
+            auto Get(JNIEnv& env, const StaticField<TagType, T>& field) const
+               -> std::enable_if_t< IsPrimitive<T>::value, T >
                {
-                return Tag<T>(jni::GetStaticField<UntaggedType<T>>(env, clazz, field));
+                return jni::GetStaticField<T>(env, clazz, field);
                }
 
             template < class T >
-            void Set(JNIEnv& env, const StaticField<TagType, T>& field, const T& value) const
+            auto Get(JNIEnv& env, const StaticField<TagType, T>& field) const
+               -> std::enable_if_t< !IsPrimitive<T>::value, T >
                {
-                SetStaticField(env, clazz, field, Untag(value));
+                return T(reinterpret_cast<UntaggedType<T>>(jni::GetStaticField<jobject*>(env, clazz, field)));
+               }
+
+            template < class T >
+            auto Set(JNIEnv& env, const StaticField<TagType, T>& field, T value) const
+               -> std::enable_if_t< IsPrimitive<T>::value >
+               {
+                SetStaticField<T>(env, clazz, field, value);
+               }
+
+            template < class T >
+            auto Set(JNIEnv& env, const StaticField<TagType, T>& field, const T& value) const
+               -> std::enable_if_t< !IsPrimitive<T>::value >
+               {
+                SetStaticField<jobject*>(env, clazz, field, value.Get());
                }
 
             template < class R, class... Args >
-            R Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
+            auto Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
+               -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
-                return Tag<R>(CallStaticMethod<UntaggedType<R>>(env, clazz, method, Untag(args)...));
+                return CallStaticMethod<R>(env, clazz, method, Untag(args)...);
+               }
+
+            template < class R, class... Args >
+            auto Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
+               -> std::enable_if_t< !IsPrimitive<R>::value, R >
+               {
+                return R(reinterpret_cast<UntaggedType<R>>(CallStaticMethod<jobject*>(env, clazz, method, Untag(args)...)));
                }
 
             template < class... Args >

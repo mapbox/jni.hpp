@@ -260,9 +260,9 @@ namespace jni
        }
 
     template < class T >
-    void SetField(JNIEnv& env, jobject* obj, jfieldID& field, T&& value)
+    void SetField(JNIEnv& env, jobject* obj, jfieldID& field, T value)
        {
-        (env.*(TypedMethods<T>::SetField))(Unwrap(obj), Unwrap(field), Unwrap(std::forward<T>(value)));
+        (env.*(TypedMethods<T>::SetField))(Unwrap(obj), Unwrap(field), Unwrap(value));
         CheckJavaException(env);
        }
 
@@ -304,9 +304,9 @@ namespace jni
        }
 
     template < class T >
-    void SetStaticField(JNIEnv& env, jclass& clazz, jfieldID& field, T&& value)
+    void SetStaticField(JNIEnv& env, jclass& clazz, jfieldID& field, T value)
        {
-        (env.*(TypedMethods<T>::SetStaticField))(Unwrap(clazz), Unwrap(field), Unwrap(std::forward<T>(value)));
+        (env.*(TypedMethods<T>::SetStaticField))(Unwrap(clazz), Unwrap(field), Unwrap(value));
         CheckJavaException(env);
        }
 
