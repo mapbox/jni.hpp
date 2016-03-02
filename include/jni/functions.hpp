@@ -8,6 +8,7 @@
 #include <jni/arraylike.hpp>
 
 #include <type_traits>
+#include <cstdlib>
 
 namespace jni
    {
@@ -109,7 +110,7 @@ namespace jni
     [[noreturn]] inline void FatalError(JNIEnv& env, const char* msg)
        {
         env.FatalError(msg);
-        abort();
+        std::abort();
        }
 
 
