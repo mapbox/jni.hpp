@@ -147,7 +147,7 @@ static void TestArrayRegion()
 namespace
    {
     void Method(jni::JNIEnv*, jni::jobject*) {}
-    void StaticMethod(jni::JNIEnv*, jni::jclass*) {}
+    int StaticMethod(jni::JNIEnv*, jni::jclass*) { return 0; }
 
     struct Struct
        {
@@ -158,12 +158,12 @@ namespace
 
 static void TestMakeNativeMethod()
    {
-    jni::MakeNativeMethod("name", "sig", Method);
-    jni::MakeNativeMethod("name", "sig", StaticMethod);
-    jni::MakeNativeMethod("name", "sig", &Method);
-    jni::MakeNativeMethod("name", "sig", &StaticMethod);
-    jni::MakeNativeMethod("name", "sig", &Struct::Method);
-    jni::MakeNativeMethod("name", "sig", &Struct::StaticMethod);
+    jni::MakeNativeMethod< decltype(Method),                Method                >("name", "sig");
+    jni::MakeNativeMethod< decltype(StaticMethod),          StaticMethod          >("name", "sig");
+    jni::MakeNativeMethod< decltype(&Method),               &Method               >("name", "sig");
+    jni::MakeNativeMethod< decltype(&StaticMethod),         &StaticMethod         >("name", "sig");
+    jni::MakeNativeMethod< decltype(&Struct::Method),       &Struct::Method       >("name", "sig");
+    jni::MakeNativeMethod< decltype(&Struct::StaticMethod), &Struct::StaticMethod >("name", "sig");
     jni::MakeNativeMethod("name", "sig", [] (jni::JNIEnv*, jni::jobject*) {});
     jni::MakeNativeMethod("name", "sig", [] (jni::JNIEnv*, jni::jclass*) {});
     jni::MakeNativeMethod("name", "sig", [] (jni::JNIEnv*, jni::jobject*) mutable {});

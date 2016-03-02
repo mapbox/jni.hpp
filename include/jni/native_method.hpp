@@ -16,80 +16,98 @@ namespace jni
    {
     /// Low-level
 
-    template < class M >
-    struct NativeMethodMaker
-       {
-        template < class T >
-        struct Maker;
+    template < class M, class Enable = void >
+    struct FunctionTypeTraits;
 
-        template < class T, class R, class P, class... Args >
-        struct Maker< R (T::*)(JNIEnv*, P*, Args...) const >
+    template < class R, class... Args >
+    struct FunctionTypeTraits< R (Args...) >
+       {
+        using Type = R (Args...);
+        using ResultType = R;
+       };
+
+    template < class R, class... Args >
+    struct FunctionTypeTraits< R (*)(Args...) >
+        : FunctionTypeTraits< R (Args...) > {};
+
+    template < class T, class R, class... Args >
+    struct FunctionTypeTraits< R (T::*)(Args...) const >
+        : FunctionTypeTraits< R (Args...) > {};
+
+    template < class T, class R, class... Args >
+    struct FunctionTypeTraits< R (T::*)(Args...) >
+        : FunctionTypeTraits< R (Args...) > {};
+
+    template < class M >
+    struct FunctionTypeTraits< M, typename std::enable_if< std::is_class<M>::value >::type >
+        : FunctionTypeTraits< decltype(&M::operator()) > {};
+
+    template < class M >
+    auto MakeNativeMethod(const char* name, const char* sig, const M& m)
+       {
+        using FunctionType = typename FunctionTypeTraits<M>::Type;
+        using ResultType = typename FunctionTypeTraits<M>::ResultType;
+
+        static FunctionType* method = m;
+
+        auto wrapper = [] (JNIEnv* env, auto... args)
            {
-            JNINativeMethod< R (JNIEnv*, P*, Args...) >
-            operator()(const char* name, const char* sig, const M& m)
+            try
                {
-                return { name, sig, m };
+                return method(env, args...);
+               }
+            catch (...)
+               {
+                ThrowJavaError(*env, std::current_exception());
+                return ResultType();
                }
            };
 
-        template < class T, class R, class P, class... Args >
-        struct Maker< R (T::*)(JNIEnv*, P*, Args...) >
+        return JNINativeMethod< FunctionType > { name, sig, wrapper };
+       }
+
+    template < class M, M method >
+    auto MakeNativeMethod(const char* name, const char* sig)
+       {
+        using FunctionType = typename FunctionTypeTraits<M>::Type;
+        using ResultType = typename FunctionTypeTraits<M>::ResultType;
+
+        auto wrapper = [] (JNIEnv* env, auto... args)
            {
-            JNINativeMethod< R (JNIEnv*, P*, Args...) >
-            operator()(const char* name, const char* sig, const M& m)
+            try
                {
-                return { name, sig, m };
+                return method(env, args...);
+               }
+            catch (...)
+               {
+                ThrowJavaError(*env, std::current_exception());
+                return ResultType();
                }
            };
 
-        auto operator()(const char* name, const char* sig, const M& m)
-           {
-            return Maker<decltype(&M::operator())>()(name, sig, m);
-           }
-       };
-
-    template < class R, class P, class... Args >
-    struct NativeMethodMaker< R (*)(JNIEnv*, P*, Args...) >
-       {
-        JNINativeMethod< R (JNIEnv*, P*, Args...) >
-        operator()(const char* name, const char* sig, R (*m)(JNIEnv*, P*, Args...))
-           {
-            return { name, sig, m };
-           }
-       };
-
-    template < class M >
-    auto MakeNativeMethod(const char* name, const char* sig, M&& m)
-       {
-        return NativeMethodMaker< typename std::decay<M>::type >()(name, sig, std::forward<M>(m));
+        return JNINativeMethod< FunctionType > { name, sig, wrapper };
        }
 
 
     /// High-level
 
+    template < class T >
+    struct NativeMethodMaker;
+
     template < class T, class R, class TagType, class... Args >
     struct NativeMethodMaker< R (T::*)(JNIEnv&, Class<TagType>, Args...) const >
        {
         template < class M >
-        JNINativeMethod< UntaggedType<R> (JNIEnv*, jclass*, UntaggedType<Args>...) >
-        operator()(const char* name, const M& m)
+        auto operator()(const char* name, const M& m)
            {
             static M method(m);
 
             auto wrapper = [] (JNIEnv* env, jclass* clazz, UntaggedType<Args>... args)
                {
-                try
-                   {
-                    return Untag(method(*env, Class<TagType>(*clazz), Tag<Args>(args)...));
-                   }
-                catch (...)
-                   {
-                    ThrowJavaError(*env, std::current_exception());
-                    return Untag(R());
-                   }
+                return Untag(method(*env, Class<TagType>(*clazz), Tag<Args>(args)...));
                };
 
-            return { name, TypeSignature<R (Args...)>()(), wrapper };
+            return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
            }
        };
 
@@ -97,24 +115,16 @@ namespace jni
     struct NativeMethodMaker< void (T::*)(JNIEnv&, Class<TagType>, Args...) const >
        {
         template < class M >
-        JNINativeMethod< void (JNIEnv*, jclass*, UntaggedType<Args>...) >
-        operator()(const char* name, const M& m)
+        auto operator()(const char* name, const M& m)
            {
             static M method(m);
 
             auto wrapper = [] (JNIEnv* env, jclass* clazz, UntaggedType<Args>... args)
                {
-                try
-                   {
-                    method(*env, Class<TagType>(*clazz), Tag<Args>(args)...);
-                   }
-                catch (...)
-                   {
-                    ThrowJavaError(*env, std::current_exception());
-                   }
+                method(*env, Class<TagType>(*clazz), Tag<Args>(args)...);
                };
 
-            return { name, TypeSignature<void (Args...)>()(), wrapper };
+            return MakeNativeMethod(name, TypeSignature<void (Args...)>()(), wrapper);
            }
        };
 
@@ -122,25 +132,16 @@ namespace jni
     struct NativeMethodMaker< R (T::*)(JNIEnv&, Object<TagType>, Args...) const >
        {
         template < class M >
-        JNINativeMethod< UntaggedType<R> (JNIEnv*, jobject*, UntaggedType<Args>...) >
-        operator()(const char* name, const M& m)
+        auto operator()(const char* name, const M& m)
            {
             static M method(m);
 
             auto wrapper = [] (JNIEnv* env, jobject* obj, UntaggedType<Args>... args)
                {
-                try
-                   {
-                    return Untag(method(*env, Object<TagType>(obj), Tag<Args>(args)...));
-                   }
-                catch (...)
-                   {
-                    ThrowJavaError(*env, std::current_exception());
-                    return Untag(R());
-                   }
+                return Untag(method(*env, Object<TagType>(obj), Tag<Args>(args)...));
                };
 
-            return { name, TypeSignature<R (Args...)>()(), wrapper };
+            return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
            }
        };
 
@@ -148,24 +149,16 @@ namespace jni
     struct NativeMethodMaker< void (T::*)(JNIEnv&, Object<TagType>, Args...) const >
        {
         template < class M >
-        JNINativeMethod< void (JNIEnv*, jobject*, UntaggedType<Args>...) >
-        operator()(const char* name, const M& m)
+        auto operator()(const char* name, const M& m)
            {
             static M method(m);
 
             auto wrapper = [] (JNIEnv* env, jobject* obj, UntaggedType<Args>... args)
                {
-                try
-                   {
-                    method(*env, Object<TagType>(obj), Tag<Args>(args)...);
-                   }
-                catch (...)
-                   {
-                    ThrowJavaError(*env, std::current_exception());
-                   }
+                method(*env, Object<TagType>(obj), Tag<Args>(args)...);
                };
 
-            return { name, TypeSignature<void (Args...)>()(), wrapper };
+            return MakeNativeMethod(name, TypeSignature<void (Args...)>()(), wrapper);
            }
        };
 
