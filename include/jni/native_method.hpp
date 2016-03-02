@@ -94,68 +94,34 @@ namespace jni
     template < class T >
     struct NativeMethodMaker;
 
-    template < class T, class R, class TagType, class... Args >
-    struct NativeMethodMaker< R (T::*)(JNIEnv&, Class<TagType>, Args...) const >
+    template < class T, class R, class Subject, class... Args >
+    struct NativeMethodMaker< R (T::*)(JNIEnv&, Subject, Args...) const >
        {
         template < class M >
         auto operator()(const char* name, const M& m)
            {
             static M method(m);
 
-            auto wrapper = [] (JNIEnv* env, jclass* clazz, UntaggedType<Args>... args)
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
                {
-                return Untag(method(*env, Class<TagType>(*clazz), Tag<Args>(args)...));
+                return Untag(method(*env, Tag<Subject>(*subject), Tag<Args>(args)...));
                };
 
             return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
            }
        };
 
-    template < class T, class TagType, class... Args >
-    struct NativeMethodMaker< void (T::*)(JNIEnv&, Class<TagType>, Args...) const >
+    template < class T, class Subject, class... Args >
+    struct NativeMethodMaker< void (T::*)(JNIEnv&, Subject, Args...) const >
        {
         template < class M >
         auto operator()(const char* name, const M& m)
            {
             static M method(m);
 
-            auto wrapper = [] (JNIEnv* env, jclass* clazz, UntaggedType<Args>... args)
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
                {
-                method(*env, Class<TagType>(*clazz), Tag<Args>(args)...);
-               };
-
-            return MakeNativeMethod(name, TypeSignature<void (Args...)>()(), wrapper);
-           }
-       };
-
-    template < class T, class R, class TagType, class... Args >
-    struct NativeMethodMaker< R (T::*)(JNIEnv&, Object<TagType>, Args...) const >
-       {
-        template < class M >
-        auto operator()(const char* name, const M& m)
-           {
-            static M method(m);
-
-            auto wrapper = [] (JNIEnv* env, jobject* obj, UntaggedType<Args>... args)
-               {
-                return Untag(method(*env, Object<TagType>(obj), Tag<Args>(args)...));
-               };
-
-            return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
-           }
-       };
-
-    template < class T, class TagType, class... Args >
-    struct NativeMethodMaker< void (T::*)(JNIEnv&, Object<TagType>, Args...) const >
-       {
-        template < class M >
-        auto operator()(const char* name, const M& m)
-           {
-            static M method(m);
-
-            auto wrapper = [] (JNIEnv* env, jobject* obj, UntaggedType<Args>... args)
-               {
-                method(*env, Object<TagType>(obj), Tag<Args>(args)...);
+                method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
                };
 
             return MakeNativeMethod(name, TypeSignature<void (Args...)>()(), wrapper);

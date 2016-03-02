@@ -8,12 +8,21 @@ namespace jni
    {
     template < class T >
     auto Tag(T primitive)
+       -> typename std::enable_if< IsPrimitive<T>::value, T >::type
        {
         return primitive;
        }
 
     template < class T, class U >
-    T Tag(U* u)
+    auto Tag(U* u)
+       -> typename std::enable_if< !IsPrimitive<T>::value, T >::type
+       {
+        return T(u);
+       }
+
+    template < class T, class U >
+    auto Tag(U& u)
+       -> typename std::enable_if< !IsPrimitive<T>::value, T >::type
        {
         return T(u);
        }

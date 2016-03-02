@@ -30,6 +30,7 @@ namespace jni
                {}
 
             operator jclass&() const { return clazz; }
+            jclass* Get() const { return &clazz; }
 
             template < class... Args >
             Object<TagType> New(JNIEnv& env, const Constructor<TagType, Args...>& method, const Args&... args) const

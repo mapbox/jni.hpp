@@ -35,6 +35,10 @@ namespace jni
                : obj(o)
                {}
 
+            explicit Object(UntaggedObjectType& o)
+               : obj(&o)
+               {}
+
             explicit Object(UniqueGlobalRef<UntaggedObjectType>&& r)
                : reference(std::move(r)),
                  obj(reference.get())
