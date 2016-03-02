@@ -135,7 +135,7 @@ namespace jni
             ArrayElementsDeleter() = default;
             ArrayElementsDeleter(JNIEnv& e, jarray<E>& a) : env(&e), array(&a) {}
 
-            void operator()(E** p) const
+            void operator()(E* p) const
                {
                 if (p)
                    {
@@ -147,7 +147,7 @@ namespace jni
        };
 
     template < class E >
-    using UniqueArrayElements = std::unique_ptr< E*, ArrayElementsDeleter<E> >;
+    using UniqueArrayElements = std::unique_ptr< E, ArrayElementsDeleter<E> >;
 
 
     template < class E >

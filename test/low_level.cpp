@@ -115,6 +115,25 @@ static void TestGetArrayLength()
     assert(Throws<jni::PendingJavaException>([] { jni::GetArrayLength(env, failureValue.Ref()); }));
    }
 
+static void TestArrayElements()
+   {
+    static Testable<jni::jarray<jni::jboolean>> arrayValue;
+    static TestEnv env;
+
+    env.functions->GetBooleanArrayElements = [] (JNIEnv*, jbooleanArray, jboolean*) -> jboolean*
+       {
+        return nullptr;
+       };
+
+    env.functions->ReleaseBooleanArrayElements = [] (JNIEnv*, jbooleanArray, jboolean*, jint)
+       {
+       };
+
+    auto result = jni::GetArrayElements<jni::jboolean>(env, arrayValue.Ref());
+    jni::ReleaseArrayElements<jni::jboolean>(env, arrayValue.Ref(), std::get<0>(result).get());
+    jni::ReleaseArrayElements<jni::jboolean>(env, arrayValue.Ref(), std::move(std::get<0>(result)));
+   }
+
 static void TestArrayRegion()
    {
     static Testable<jni::jarray<jni::jboolean>> arrayValue;
@@ -261,12 +280,9 @@ int main()
     NewArray
     jobject     (*GetObjectArrayElement)(JNIEnv*, jobjectArray, jsize);
     void        (*SetObjectArrayElement)(JNIEnv*, jobjectArray, jsize, jobject);
-
-    jboolean*   (*GetArrayElements)(JNIEnv*, jbooleanArray, jboolean*);
-    void        (*ReleaseArrayElements)(JNIEnv*, jbooleanArray,
-                        jboolean*, jint);
     */
 
+    TestArrayElements();
     TestArrayRegion();
 
     TestMakeNativeMethod();

@@ -429,13 +429,13 @@ namespace jni
     std::tuple<UniqueArrayElements<E>, jboolean> GetArrayElements(JNIEnv& env, jarray<E>& array)
        {
         ::jboolean isCopy = JNI_FALSE;
-        const E** result = CheckJavaException(env,
+        E* result = CheckJavaException(env,
             (env.*(TypedMethods<E>::GetArrayElements))(Unwrap(array), &isCopy));
         return std::make_tuple(UniqueArrayElements<E>(result, ArrayElementsDeleter<E>(env, array)), Wrap<jboolean>(isCopy));
        }
 
     template < class E >
-    void ReleaseArrayElements(JNIEnv& env, jarray<E>& array, E** elems)
+    void ReleaseArrayElements(JNIEnv& env, jarray<E>& array, E* elems)
        {
         (env.*(TypedMethods<E>::ReleaseArrayElements))(Unwrap(array), elems, JNI_COMMIT);
         CheckJavaException(env);
