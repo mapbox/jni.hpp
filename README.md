@@ -52,12 +52,31 @@ The high-level wrappers consist of a set of classes templated on class tag:
 * `jni::Field<Tag, T>`, a wrapper for an instance field of the Java class associated with the tag, and providing `Get` and `Set` methods. The field type `T` is a jni.hpp primitive type or `Object<Tag>`.
 * `jni::StaticField<Tag, T>`, a wrapper for a static field of the Java class associated with the tag, and providing `Get` and `Set` methods. The field type `T` is a jni.hpp primitive type or `Object<Tag>`.
 
-Finally, the high-level wrappers provide the method `jni::NativeMethod` for binding native methods which use the high-level jni.hpp types. Given a `const char *` method name and a `Callable` object whose call signature uses high-level types, `jni::NativeMethod` returns a `jni::JNINativeMethod` struct that can be included in an array passed to `jni::RegisterNatives`. `jni::NativeMethod` takes care of:
+## Method Registration
 
-* Deducing and constructing the JNI type signature of the native method.
-* Wrapping your code in a try/catch block that handles translating native exceptions to Java exceptions.
+Registering native methods is a central part of JNI, and jni.hpp provides several features that make this task safer and more convenient. The jni.hpp wrapper method `jni::RegisterNatives` has the following signature:
 
-The `Callable` object passed to `jni::NativeMethod` must be movable and uniquely typed -- lambdas are perfect.
+```C++
+template < class... Methods >
+void RegisterNatives(jni::JNIEnv& env, jni::jclass&, const Methods&... methods);
+```
+
+In other words, rather than receiving a length and pointer to an array of `JNIMethod`s, it takes a variable number of variable types. This allows `jni::RegisterNatives` to type check the methods, ensuring that their type signatures are valid for JNI.
+
+Use the helper function `jni::MakeNativeMethod` to construct method arguments for `jni::RegisterNatives`. `jni::MakeNativeMethod` wraps your method in a `try` / `catch` block that translates C++ exceptions to Java exceptions. It is overloaded on the following combinations of arguments:
+
+* A `const char *` name, `const char *` signature, and lambda. The type of the first parameter of the lambda must be `jni::JNIEnv&`. The type of the second parameter must be either `jni::jclass*` (for a native static method) or `jni::jobject*` (for a native instance method). The result type must be a JNI primitive type or type convertable to `jni::jobject*`. (These requirements are type checked.)
+* A `const char *` name, `const char *` signature, and function pointer. The function has the same  parameter and return type requirements as the lambda. In order to guarantee a unique exception-handling wrapper for each unique function pointer, the function pointer must be provided as a _template parameter_ rather than method parameter:
+
+ ```C++
+ jni::MakeNativeMethod<decltype(myFunction), myFunction>(name, signature)
+ ```
+
+ The `decltype` is necessary because it is not possible to infer the types from a non-type template parameter. You may wish to use a macro to avoid repetition. See below for example code.
+* A `const char *` name and lamba whose parameter and return types use high-level jni.hpp wrapper types. In this case, jni.hpp will compute the signature automatically.
+* A `const char *` name and function pointer whose parameter and return types use high-level jni.hpp wrapper types. Again, jni.hpp will compute the signature automatically, and again, the function pointer must be provided as a template parameter rather than method parameter.
+
+Finally, jni.hpp provides a mechanism for registering a "native peer": a long-lived native object corresponding to a Java object, usually created when the Java object is created and destroyed when the Java object's finalizer runs. Between creation and finalization, a pointer to the native peer is stored in a `long` field on the Java object. jni.hpp will take care of wrapping lambdas, function pointers, or member function pointers with code that automatically gets the value of this field, casts it to a pointer to the peer, and calls the member function (or passes a reference to the peer as an argument to the lambda or function pointer). See the example code for details.
 
 ## Example code
 
@@ -65,7 +84,7 @@ Example code for both the low-level and high-level wrappers is provided in [the 
 
 * Binding native methods such that they can be called from Java.
 * Calling back into Java methods from native code.
-* Binding native methods for a "native peer": a long-lived native object corresponding to a Java object, usually created when the Java object is created and destroyed when the Java object's finalizer runs.
+* Native peer registration.
 
 ## Prior art
 
