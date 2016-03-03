@@ -17,9 +17,9 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*)
 
     jni::JNIEnv& env { jni::GetEnv(*vm) };
 
-    #define METHOD(MethodPtr, name) jni::NativePeerMethod<decltype(MethodPtr), (MethodPtr)>(name)
+    #define METHOD(MethodPtr, name) jni::MakeNativePeerMethod<decltype(MethodPtr), (MethodPtr)>(name)
 
-    jni::RegisterNativePeer(env, jni::Class<Calculator>::Find(env), "peer",
+    jni::RegisterNativePeer<Calculator>(env, jni::Class<Calculator>::Find(env), "peer",
         std::make_unique<Calculator>,
         "initialize",
         "finalize",

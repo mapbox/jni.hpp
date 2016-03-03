@@ -50,6 +50,7 @@ namespace jni
 
             explicit operator bool() const { return obj; }
 
+            operator UntaggedObjectType*() const { return obj; }
             UntaggedObjectType& operator*() const { return *obj; }
             UntaggedObjectType* Get() const { return obj; }
 

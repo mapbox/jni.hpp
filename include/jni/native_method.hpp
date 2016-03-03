@@ -14,40 +14,41 @@
 
 namespace jni
    {
-    /// Low-level
-
     template < class M, class Enable = void >
-    struct FunctionTypeTraits;
+    struct NativeMethodTraits;
 
     template < class R, class... Args >
-    struct FunctionTypeTraits< R (Args...) >
+    struct NativeMethodTraits< R (Args...) >
        {
         using Type = R (Args...);
         using ResultType = R;
        };
 
     template < class R, class... Args >
-    struct FunctionTypeTraits< R (*)(Args...) >
-        : FunctionTypeTraits< R (Args...) > {};
+    struct NativeMethodTraits< R (*)(Args...) >
+        : NativeMethodTraits< R (Args...) > {};
 
     template < class T, class R, class... Args >
-    struct FunctionTypeTraits< R (T::*)(Args...) const >
-        : FunctionTypeTraits< R (Args...) > {};
+    struct NativeMethodTraits< R (T::*)(Args...) const >
+        : NativeMethodTraits< R (Args...) > {};
 
     template < class T, class R, class... Args >
-    struct FunctionTypeTraits< R (T::*)(Args...) >
-        : FunctionTypeTraits< R (Args...) > {};
+    struct NativeMethodTraits< R (T::*)(Args...) >
+        : NativeMethodTraits< R (Args...) > {};
 
     template < class M >
-    struct FunctionTypeTraits< M, std::enable_if_t< std::is_class<M>::value > >
-        : FunctionTypeTraits< decltype(&M::operator()) > {};
+    struct NativeMethodTraits< M, std::enable_if_t< std::is_class<M>::value > >
+        : NativeMethodTraits< decltype(&M::operator()) > {};
+
+
+    /// Low-level, lambda
 
     template < class M >
     auto MakeNativeMethod(const char* name, const char* sig, const M& m,
                           std::enable_if_t< std::is_class<M>::value >* = 0)
        {
-        using FunctionType = typename FunctionTypeTraits<M>::Type;
-        using ResultType = typename FunctionTypeTraits<M>::ResultType;
+        using FunctionType = typename NativeMethodTraits<M>::Type;
+        using ResultType = typename NativeMethodTraits<M>::ResultType;
 
         static FunctionType* method = m;
 
@@ -67,11 +68,14 @@ namespace jni
         return JNINativeMethod< FunctionType > { name, sig, wrapper };
        }
 
+
+    /// Low-level, function pointer
+
     template < class M, M method >
     auto MakeNativeMethod(const char* name, const char* sig)
        {
-        using FunctionType = typename FunctionTypeTraits<M>::Type;
-        using ResultType = typename FunctionTypeTraits<M>::ResultType;
+        using FunctionType = typename NativeMethodTraits<M>::Type;
+        using ResultType = typename NativeMethodTraits<M>::ResultType;
 
         auto wrapper = [] (JNIEnv* env, auto... args)
            {
@@ -90,7 +94,7 @@ namespace jni
        }
 
 
-    /// High-level
+    /// High-level, lambda
 
     template < class T, T... >
     struct NativeMethodMaker;
@@ -103,29 +107,12 @@ namespace jni
            {
             static M method(m);
 
-            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args) -> UntaggedType<R>
                {
-                return Untag(method(*env, Tag<Subject>(*subject), Tag<Args>(args)...));
+                return method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
                };
 
             return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
-           }
-       };
-
-    template < class T, class Subject, class... Args >
-    struct NativeMethodMaker< void (T::*)(JNIEnv&, Subject, Args...) const >
-       {
-        template < class M >
-        auto operator()(const char* name, const M& m)
-           {
-            static M method(m);
-
-            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
-               {
-                method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
-               };
-
-            return MakeNativeMethod(name, TypeSignature<void (Args...)>()(), wrapper);
            }
        };
 
@@ -135,63 +122,140 @@ namespace jni
         return NativeMethodMaker<decltype(&M::operator())>()(name, m);
        }
 
+
+    /// High-level, function pointer
+
     template < class R, class Subject, class... Args, R (*method)(JNIEnv&, Subject, Args...) >
     struct NativeMethodMaker< R (JNIEnv&, Subject, Args...), method >
        {
         auto operator()(const char* name)
            {
-            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args) -> UntaggedType<R>
                {
-                return Untag(method(*env, Tag<Subject>(*subject), Tag<Args>(args)...));
+                return method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
                };
 
             return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
            }
        };
 
-    template < class Subject, class... Args, void (*method)(JNIEnv&, Subject, Args...) >
-    struct NativeMethodMaker< void (JNIEnv&, Subject, Args...), method >
-       {
-        auto operator()(const char* name)
-           {
-            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
-               {
-                method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
-               };
-
-            return MakeNativeMethod(name, TypeSignature<void (Args...)>()(), wrapper);
-           }
-       };
-
     template < class M, M method >
     auto MakeNativeMethod(const char* name)
        {
-        using FunctionType = typename FunctionTypeTraits<M>::Type;
+        using FunctionType = typename NativeMethodTraits<M>::Type;
         return NativeMethodMaker<FunctionType, method>()(name);
        }
 
 
-    template < class M, M >
-    class NativePeerMethod;
+    /// High-level peer, lambda
 
-    template < class T, class R, class... Args, R (T::*method)(JNIEnv&, Args...) >
-    class NativePeerMethod< R (T::*)(JNIEnv&, Args...), method >
+    template < class L, class >
+    class NativePeerLambdaMethod;
+
+    template < class L, class R, class P, class... Args >
+    class NativePeerLambdaMethod< L, R (L::*)(JNIEnv&, P&, Args...) const >
+       {
+        private:
+            const char* name;
+            L lambda;
+
+        public:
+            NativePeerLambdaMethod(const char* n, const L& l)
+               : name(n), lambda(l)
+               {}
+
+            template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
+            auto operator()(const Field<TagType, jlong>& field)
+               {
+                auto wrapper = [field, lambda = lambda] (JNIEnv& env, Object<TagType> obj, Args... args)
+                   {
+                    return lambda(env, *reinterpret_cast<P*>(obj.Get(env, field)), std::move(args)...);
+                   };
+
+                return MakeNativeMethod(name, wrapper);
+               }
+       };
+
+    template < class L >
+    auto MakeNativePeerMethod(const char* name, const L& lambda,
+                              std::enable_if_t< std::is_class<L>::value >* = 0)
+       {
+        return NativePeerLambdaMethod<L, decltype(&L::operator())>(name, lambda);
+       }
+
+
+    /// High-level peer, function pointer
+
+    template < class M, M >
+    class NativePeerFunctionPointerMethod;
+
+    template < class R, class P, class... Args, R (*method)(JNIEnv&, P&, Args...) >
+    class NativePeerFunctionPointerMethod< R (JNIEnv&, P&, Args...), method >
        {
         private:
             const char* name;
 
         public:
-            NativePeerMethod(const char* n)
+            NativePeerFunctionPointerMethod(const char* n)
                : name(n)
                {}
 
-            template < class TagType >
+            template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
             auto operator()(const Field<TagType, jlong>& field)
                {
-                return MakeNativeMethod(name, [&field] (JNIEnv& env, Object<TagType> obj, Args... args)
-                   { return (reinterpret_cast<T*>(obj.Get(env, field))->*method)(env, std::move(args)...); });
+                auto wrapper = [field] (JNIEnv& env, Object<TagType> obj, Args... args)
+                   {
+                    return method(env, *reinterpret_cast<P*>(obj.Get(env, field)), std::move(args)...);
+                   };
+
+                return MakeNativeMethod(name, wrapper);
                }
        };
+
+    template < class M, M method >
+    auto MakeNativePeerMethod(const char* name,
+                              std::enable_if_t< !std::is_member_function_pointer<M>::value >* = 0)
+       {
+        using FunctionType = typename NativeMethodTraits<M>::Type;
+        return NativePeerFunctionPointerMethod<FunctionType, method>(name);
+       }
+
+
+    /// High-level peer, member function pointer
+
+    template < class M, M >
+    class NativePeerMemberFunctionMethod;
+
+    template < class R, class P, class... Args, R (P::*method)(JNIEnv&, Args...) >
+    class NativePeerMemberFunctionMethod< R (P::*)(JNIEnv&, Args...), method >
+       {
+        private:
+            const char* name;
+
+        public:
+            NativePeerMemberFunctionMethod(const char* n)
+               : name(n)
+               {}
+
+            template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
+            auto operator()(const Field<TagType, jlong>& field)
+               {
+                auto wrapper = [field] (JNIEnv& env, Object<TagType> obj, Args... args)
+                   {
+                    return (reinterpret_cast<P*>(obj.Get(env, field))->*method)(env, std::move(args)...);
+                   };
+
+                return MakeNativeMethod(name, wrapper);
+               }
+       };
+
+    template < class M, M method >
+    auto MakeNativePeerMethod(const char* name,
+                              std::enable_if_t< std::is_member_function_pointer<M>::value >* = 0)
+       {
+        return NativePeerMemberFunctionMethod<M, method>(name);
+       }
+
 
     /**
      * A registration function for native methods on a "native peer": a long-lived native
@@ -214,36 +278,33 @@ namespace jni
      * For an example of all of the above, see the `examples` directory.
      */
 
-    template < class TagType, class... Methods >
+    template < class Peer, class TagType, class... Methods >
     void RegisterNativePeer(JNIEnv& env, const Class<TagType>& clazz, const char* fieldName, Methods&&... methods)
        {
         static Field<TagType, jni::jlong> field { env, clazz, fieldName };
-        RegisterNatives(env, clazz, methods(field)...);
+        RegisterNatives(env, clazz, methods.template operator()<Peer>(field)...);
        }
 
-    template < class TagType, class Constructor, class... Methods >
+    template < class Peer, class TagType, class Constructor, class... Methods >
     void RegisterNativePeer(JNIEnv& env, const Class<TagType>& clazz, const char* fieldName,
                             Constructor constructor,
                             const char* initializeMethodName,
                             const char* finalizeMethodName,
                             Methods&&... methods)
        {
-        using UniquePtr = decltype(constructor());
-        using Pointer = typename UniquePtr::pointer;
-
         static Field<TagType, jlong> field { env, clazz, fieldName };
 
         auto finalize = [] (JNIEnv& e, Object<TagType> obj)
            {
-            UniquePtr instance(reinterpret_cast<Pointer>(obj.Get(e, field)));
+            std::unique_ptr<Peer> instance(reinterpret_cast<Peer*>(obj.Get(e, field)));
             if (instance) obj.Set(e, field, jlong(0));
             instance.reset();
            };
 
         auto initialize = [constructor] (JNIEnv& e, Object<TagType> obj)
            {
-            UniquePtr previous(reinterpret_cast<Pointer>(obj.Get(e, field)));
-            UniquePtr instance(constructor());
+            std::unique_ptr<Peer> previous(reinterpret_cast<Peer*>(obj.Get(e, field)));
+            std::unique_ptr<Peer> instance(constructor());
             obj.Set(e, field, reinterpret_cast<jlong>(instance.get()));
             instance.release();
            };
@@ -251,6 +312,6 @@ namespace jni
         RegisterNatives(env, clazz,
             MakeNativeMethod(initializeMethodName, initialize),
             MakeNativeMethod(finalizeMethodName, finalize),
-            methods(field)...);
+            methods.template operator()<Peer>(field)...);
        }
    }

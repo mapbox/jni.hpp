@@ -11,6 +11,14 @@ namespace
 
     void Method(jni::JNIEnv&, jni::Object<Test>) {}
     int StaticMethod(jni::JNIEnv&, jni::Class<Test>) { return 0; }
+
+    struct Peer
+       {
+        jni::jboolean True(jni::JNIEnv&) { return jni::jni_true; }
+        jni::jboolean False(jni::JNIEnv&) { return jni::jni_false; }
+        void Void(jni::JNIEnv&, jni::jboolean b) { assert(b == jni::jni_true); }
+        static void Static(jni::JNIEnv&, Peer&) {}
+       };
    }
 
 int main()
@@ -716,14 +724,7 @@ int main()
     jni::MakeNativeMethod<decltype(&StaticMethod), &StaticMethod>("name");
 
 
-    static JNINativeMethod methods[3];
-
-    struct Peer
-       {
-        jni::jboolean True(jni::JNIEnv&) { return jni::jni_true; }
-        jni::jboolean False(jni::JNIEnv&) { return jni::jni_false; }
-        void Void(jni::JNIEnv&, jni::jboolean b) { assert(b == jni::jni_true); }
-       };
+    static JNINativeMethod methods[6];
 
     static Peer peerInstance;
 
@@ -744,17 +745,20 @@ int main()
 
     env.functions->RegisterNatives = [] (JNIEnv*, jclass, const JNINativeMethod* m, jint len) -> jint
        {
-        assert(len == 3);
-        std::copy(m, m + 3, methods);
+        assert(len == 6);
+        std::copy(m, m + 6, methods);
         return JNI_OK;
        };
 
-    #define METHOD(MethodPtr, name) jni::NativePeerMethod<decltype(MethodPtr), (MethodPtr)>(name)
+    #define METHOD(name, MethodPtr) jni::MakeNativePeerMethod<decltype(MethodPtr), (MethodPtr)>(name)
 
-    jni::RegisterNativePeer(env, testClass, "peer",
-        METHOD(&Peer::True, "true"),
-        METHOD(&Peer::False, "false"),
-        METHOD(&Peer::Void, "void"));
+    jni::RegisterNativePeer<Peer>(env, testClass, "peer",
+        METHOD("true", &Peer::True),
+        METHOD("false", &Peer::False),
+        METHOD("void", &Peer::Void),
+        METHOD("static", Peer::Static),
+        METHOD("static", &Peer::Static),
+        jni::MakeNativePeerMethod("static", [] (JNIEnv&, Peer&) {}));
 
     assert(methods[0].name == std::string("true"));
     assert(methods[1].name == std::string("false"));
