@@ -131,7 +131,7 @@ namespace jni
        {
         jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t)));
         CheckJavaException(env);
-        if (!obj)
+        if (t && !obj)
             throw std::bad_alloc();
         return UniqueGlobalRef<T>(reinterpret_cast<T*>(obj), GlobalRefDeleter(env));
        }
