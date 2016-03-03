@@ -72,7 +72,7 @@ Use the helper function `jni::MakeNativeMethod` to construct method arguments fo
  jni::MakeNativeMethod<decltype(myFunction), myFunction>(name, signature)
  ```
 
- The `decltype` is necessary because it is not possible to infer the types from a non-type template parameter. You may wish to use a macro to avoid repetition. See below for example code.
+ The repetition of `myFunction` with `decltype` is necessary because it is not possible to infer the function type from the non-type template parameter. You may wish to define and use a macro to avoid the repetition.
 * A `const char *` name and lamba whose parameter and return types use high-level jni.hpp wrapper types. In this case, jni.hpp will compute the signature automatically.
 * A `const char *` name and function pointer whose parameter and return types use high-level jni.hpp wrapper types. Again, jni.hpp will compute the signature automatically, and again, the function pointer must be provided as a template parameter rather than method parameter.
 
@@ -82,8 +82,8 @@ Finally, jni.hpp provides a mechanism for registering a "native peer": a long-li
 
 Example code for both the low-level and high-level wrappers is provided in [the `examples` subdirectory](https://github.com/mapbox/jni.hpp/tree/master/examples). This code shows the use of jni.hpp for:
 
-* Binding native methods such that they can be called from Java.
-* Calling back into Java methods from native code.
+* Registering native methods such that they can be called from Java.
+* Calling back into Java methods from native methods.
 * Native peer registration.
 
 ## Prior art
