@@ -8,7 +8,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*)
        {
         static constexpr auto Name() { return "Calculator"; }
 
-        Calculator() { std::cout << "Native peer initialized" << std::endl; }
+        Calculator(JNIEnv&) { std::cout << "Native peer initialized" << std::endl; }
         ~Calculator() { std::cout << "Native peer finalized" << std::endl; }
 
         jni::jlong Add(jni::JNIEnv&, jni::jlong a, jni::jlong b) { return a + b; }
@@ -20,7 +20,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*)
     #define METHOD(MethodPtr, name) jni::MakeNativePeerMethod<decltype(MethodPtr), (MethodPtr)>(name)
 
     jni::RegisterNativePeer<Calculator>(env, jni::Class<Calculator>::Find(env), "peer",
-        std::make_unique<Calculator>,
+        std::make_unique<Calculator, JNIEnv&>,
         "initialize",
         "finalize",
         METHOD(&Calculator::Add, "add"),

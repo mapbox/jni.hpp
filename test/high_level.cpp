@@ -14,6 +14,8 @@ namespace
 
     struct Peer
        {
+        Peer() {}
+        Peer(jni::JNIEnv&, jni::jboolean) {}
         jni::jboolean True(jni::JNIEnv&) { return jni::jni_true; }
         jni::jboolean False(jni::JNIEnv&) { return jni::jni_false; }
         void Void(jni::JNIEnv&, jni::jboolean b) { assert(b == jni::jni_true); }
@@ -746,7 +748,7 @@ int main()
     env.functions->RegisterNatives = [] (JNIEnv*, jclass, const JNINativeMethod* m, jint len) -> jint
        {
         assert(len == 6);
-        std::copy(m, m + 6, methods);
+        std::copy(m, m + len, methods);
         return JNI_OK;
        };
 
@@ -766,6 +768,18 @@ int main()
     assert(reinterpret_cast<jboolean (*)(JNIEnv&, jobject)>(methods[0].fnPtr)(env, jni::Unwrap(objectValue.Ptr())) == jni::jni_true);
     assert(reinterpret_cast<jboolean (*)(JNIEnv&, jobject)>(methods[1].fnPtr)(env, jni::Unwrap(objectValue.Ptr())) == jni::jni_false);
     reinterpret_cast<void (*)(JNIEnv&, jobject, jboolean)>(methods[2].fnPtr)(env, jni::Unwrap(objectValue.Ptr()), jni::jni_true);
+
+    jni::RegisterNativePeer<Peer>(env, testClass, "peer",
+        std::make_unique<Peer, jni::JNIEnv&, jni::jboolean>,
+        "initialize",
+        "finalize",
+        METHOD("true", &Peer::True),
+        METHOD("false", &Peer::False),
+        METHOD("void", &Peer::Void),
+        jni::MakeNativePeerMethod("static", [] (JNIEnv&, Peer&) {}));
+
+    assert(methods[0].name == std::string("initialize"));
+    assert(methods[1].name == std::string("finalize"));
 
     return 0;
    }

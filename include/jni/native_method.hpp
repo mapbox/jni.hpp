@@ -285,33 +285,56 @@ namespace jni
         RegisterNatives(env, clazz, methods.template operator()<Peer>(field)...);
        }
 
-    template < class Peer, class TagType, class Constructor, class... Methods >
+    template < class Peer, class TagType, class >
+    struct NativePeerHelper;
+
+    template < class Peer, class TagType, class... Args >
+    struct NativePeerHelper< Peer, TagType, std::unique_ptr<Peer> (JNIEnv&, Args...) >
+       {
+        using UniquePeer = std::unique_ptr<Peer>;
+        using Initializer = UniquePeer (JNIEnv&, Args...);
+
+        auto MakeInitializer(const Field<TagType, jlong>& field, const char* name, Initializer* initializer) const
+           {
+            auto wrapper = [field, initializer] (JNIEnv& e, Object<TagType> obj, std::decay_t<Args>... args)
+               {
+                UniquePeer previous(reinterpret_cast<Peer*>(obj.Get(e, field)));
+                UniquePeer instance(initializer(e, std::move(args)...));
+                obj.Set(e, field, reinterpret_cast<jlong>(instance.get()));
+                instance.release();
+               };
+
+            return MakeNativeMethod(name, wrapper);
+           }
+
+        auto MakeFinalizer(const Field<TagType, jlong>& field, const char* name) const
+           {
+            auto wrapper = [field] (JNIEnv& e, Object<TagType> obj)
+               {
+                UniquePeer instance(reinterpret_cast<Peer*>(obj.Get(e, field)));
+                if (instance) obj.Set(e, field, jlong(0));
+                instance.reset();
+               };
+
+            return MakeNativeMethod(name, wrapper);
+           }
+       };
+
+    template < class Peer, class TagType, class Initializer, class... Methods >
     void RegisterNativePeer(JNIEnv& env, const Class<TagType>& clazz, const char* fieldName,
-                            Constructor constructor,
+                            Initializer initialize,
                             const char* initializeMethodName,
                             const char* finalizeMethodName,
                             Methods&&... methods)
        {
         static Field<TagType, jlong> field { env, clazz, fieldName };
 
-        auto finalize = [] (JNIEnv& e, Object<TagType> obj)
-           {
-            std::unique_ptr<Peer> instance(reinterpret_cast<Peer*>(obj.Get(e, field)));
-            if (instance) obj.Set(e, field, jlong(0));
-            instance.reset();
-           };
-
-        auto initialize = [constructor] (JNIEnv& e, Object<TagType> obj)
-           {
-            std::unique_ptr<Peer> previous(reinterpret_cast<Peer*>(obj.Get(e, field)));
-            std::unique_ptr<Peer> instance(constructor());
-            obj.Set(e, field, reinterpret_cast<jlong>(instance.get()));
-            instance.release();
-           };
+        using InitializerMethodType = typename NativeMethodTraits<Initializer>::Type;
+        NativePeerHelper<Peer, TagType, InitializerMethodType> helper;
 
         RegisterNatives(env, clazz,
-            MakeNativeMethod(initializeMethodName, initialize),
-            MakeNativeMethod(finalizeMethodName, finalize),
+            helper.MakeInitializer(field, initializeMethodName, initialize),
+            helper.MakeFinalizer(field, finalizeMethodName),
             methods.template operator()<Peer>(field)...);
        }
    }
