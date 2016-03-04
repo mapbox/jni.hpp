@@ -114,13 +114,15 @@ namespace jni
        }
 
 
-    inline void PushLocalFrame(JNIEnv& env, jint capacity)
+    inline UniqueLocalFrame PushLocalFrame(JNIEnv& env, jint capacity)
        {
         CheckJavaExceptionThenErrorCode(env, env.PushLocalFrame(capacity));
+        return UniqueLocalFrame(&env, LocalFrameDeleter());
        }
 
-    inline jobject* PopLocalFrame(JNIEnv& env, jobject* result = nullptr)
+    inline jobject* PopLocalFrame(JNIEnv& env, UniqueLocalFrame&& frame, jobject* result = nullptr)
        {
+        frame.release();
         return CheckJavaException(env,
             Wrap<jobject*>(env.PopLocalFrame(Unwrap(result))));
        }

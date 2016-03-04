@@ -6,6 +6,20 @@
 
 namespace jni
    {
+    struct LocalFrameDeleter
+       {
+        void operator()(JNIEnv* env) const
+           {
+            if (env)
+               {
+                env->PopLocalFrame(nullptr);
+               }
+           }
+       };
+
+    using UniqueLocalFrame = std::unique_ptr< JNIEnv, LocalFrameDeleter >;
+
+
     class GlobalRefDeleter
        {
         private:
