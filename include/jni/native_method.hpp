@@ -96,7 +96,7 @@ namespace jni
 
     /// High-level, lambda
 
-    template < class T, T... >
+    template < class T, T*... >
     struct NativeMethodMaker;
 
     template < class T, class R, class Subject, class... Args >
@@ -186,7 +186,7 @@ namespace jni
 
     /// High-level peer, function pointer
 
-    template < class M, M >
+    template < class M, M* >
     class NativePeerFunctionPointerMethod;
 
     template < class R, class P, class... Args, R (*method)(JNIEnv&, P&, Args...) >
