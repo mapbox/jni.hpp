@@ -4,7 +4,7 @@
 #include <cassert>
 #include <memory>
 #include <utility>
-
+#include <limits>
 #include <jni.h>
 
 namespace jni
