@@ -4,6 +4,7 @@
 #include <jni/object.hpp>
 #include <jni/array.hpp>
 
+#include <initializer_list>
 #include <string>
 
 namespace jni
@@ -44,12 +45,12 @@ namespace jni
     struct TypeSignature< R (Args...) >
        {
         private:
-            template < class... T > void DoNothingWith( T&&... ) const {}
+            template < class T > void DoNothingWith(const std::initializer_list<T>&) const {}
 
             std::string Compute() const
                {
                 static std::string result("(");
-                DoNothingWith( ( result += TypeSignature<Args>()() )... );
+                DoNothingWith<int>( { ( result += TypeSignature<Args>()(), 0 )... } );
                 result += ")";
                 result += TypeSignature<R>()();
                 return result;
