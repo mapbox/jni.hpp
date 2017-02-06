@@ -162,7 +162,7 @@ namespace jni
        }
 
     template < class T >
-    UniqueWeakGlobalRef<T> NewWeakGlobalRef(JNIEnv& env, T& t)
+    UniqueWeakGlobalRef<T> NewWeakGlobalRef(JNIEnv& env, T* t)
        {
         T* result = Wrap<T*>(env.NewWeakGlobalRef(Unwrap(t)));
         CheckJavaException(env);
