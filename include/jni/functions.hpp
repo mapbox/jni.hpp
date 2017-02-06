@@ -164,11 +164,11 @@ namespace jni
     template < class T >
     UniqueWeakGlobalRef<T> NewWeakGlobalRef(JNIEnv& env, T* t)
        {
-        T* result = Wrap<T*>(env.NewWeakGlobalRef(Unwrap(t)));
+        jobject* obj = Wrap<jobject*>(env.NewWeakGlobalRef(Unwrap(t)));
         CheckJavaException(env);
-        if (!result)
+        if (t && !obj)
             throw std::bad_alloc();
-        return UniqueWeakGlobalRef<T>(result, WeakGlobalRefDeleter(env));
+        return UniqueWeakGlobalRef<T>(reinterpret_cast<T*>(obj), WeakGlobalRefDeleter(env));
        }
 
     inline void DeleteWeakGlobalRef(JNIEnv& env, UniqueWeakGlobalRef<jobject>&& ref)

@@ -71,6 +71,7 @@ int main()
     assert(classValue == testClass);
 
     static bool calledNewGlobalRef = false;
+    static bool calledNewWeakGlobalRef = false;
 
     env.functions->NewGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
        {
@@ -82,6 +83,16 @@ int main()
        {
        };
 
+    env.functions->NewWeakGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
+       {
+        calledNewWeakGlobalRef = true;
+        return obj;
+       };
+
+    env.functions->DeleteWeakGlobalRef = [] (JNIEnv*, jobject) -> void
+       {
+       };
+
     testClass.NewGlobalRef(env);
     assert(calledNewGlobalRef);
 
@@ -90,9 +101,11 @@ int main()
 
     jni::Object<Test> object { objectValue.Ptr() };
     object.NewGlobalRef(env);
+    object.NewWeakGlobalRef(env);
 
     jni::String string { stringValue.Ptr() };
     string.NewGlobalRef(env);
+    string.NewWeakGlobalRef(env);
 
 
     /// Constructor

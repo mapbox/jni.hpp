@@ -77,6 +77,37 @@ static void TestNewAndDeleteGlobalRef()
        [] { jni::DeleteGlobalRef(env, jni::NewGlobalRef(env, failureValue.Ptr())); }));
    }
 
+static void TestNewAndDeleteWeakGlobalRef()
+   {
+    static Testable<jni::jobject> objectValue;
+    static Testable<jni::jclass> classValue;
+    static Testable<jni::jobject> failureValue;
+    static TestEnv env;
+
+    env.functions->NewWeakGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
+       {
+        if (obj == Unwrap(objectValue.Ptr()))
+            return Unwrap(objectValue.Ptr());
+        if (obj == Unwrap(classValue.Ptr()))
+            return Unwrap(classValue.Ptr());
+        env.exception = true;
+        return nullptr;
+       };
+
+    env.functions->DeleteWeakGlobalRef = [] (JNIEnv*, jobject obj) -> void
+       {
+        if (obj == Unwrap(objectValue.Ptr()))
+            return;
+        env.exception = true;
+       };
+
+    assert(objectValue == *jni::NewWeakGlobalRef(env, objectValue.Ptr()));
+    assert(classValue == *jni::NewWeakGlobalRef(env, classValue.Ptr()));
+    assert(Throws<jni::PendingJavaException>([] { jni::NewWeakGlobalRef(env, failureValue.Ptr()); }));
+    assert(Throws<jni::PendingJavaException>(
+       [] { jni::DeleteWeakGlobalRef(env, jni::NewWeakGlobalRef(env, failureValue.Ptr())); }));
+   }
+
 static void TestNewObject()
    {
     static Testable<jni::jclass> classValue;
@@ -227,6 +258,7 @@ int main()
     */
 
     TestNewAndDeleteGlobalRef();
+    TestNewAndDeleteWeakGlobalRef();
 
     /*
         jobject     (*NewLocalRef)(JNIEnv*, jobject);
@@ -303,9 +335,6 @@ int main()
 
         const jchar* (*GetStringCritical)(JNIEnv*, jstring, jboolean*);
         void        (*ReleaseStringCritical)(JNIEnv*, jstring, const jchar*);
-
-        jweak       (*NewWeakGlobalRef)(JNIEnv*, jobject);
-        void        (*DeleteWeakGlobalRef)(JNIEnv*, jweak);
     */
 
     /*
