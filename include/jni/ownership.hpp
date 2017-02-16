@@ -66,6 +66,29 @@ namespace jni
     using UniqueWeakGlobalRef = std::unique_ptr< T, WeakGlobalRefDeleter >;
 
 
+    class LocalRefDeleter
+       {
+        private:
+            JNIEnv* env = nullptr;
+
+        public:
+            LocalRefDeleter() = default;
+            LocalRefDeleter(JNIEnv& e) : env(&e) {}
+
+            void operator()(jobject* p) const
+               {
+                if (p)
+                   {
+                    assert(env);
+                    env->DeleteLocalRef(Unwrap(p));
+                   }
+               }
+       };
+
+    template < class T >
+    using UniqueLocalRef = std::unique_ptr< T, LocalRefDeleter >;
+
+
     class StringCharsDeleter
        {
         private:
