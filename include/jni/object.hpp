@@ -23,13 +23,13 @@ namespace jni
     template < class TagType >
     class ObjectDeleter;
 
-    template < class TagType >
+    template < class TagType = ObjectTag >
     using UniqueObject = std::unique_ptr< const Object<TagType>, ObjectDeleter<TagType> >;
 
     template < class TagType >
     class WeakObjectRefDeleter;
 
-    template < class TagType >
+    template < class TagType = ObjectTag >
     using UniqueWeakObject = std::unique_ptr< const Object<TagType>, WeakObjectRefDeleter<TagType> >;
 
     template < class TheTag = ObjectTag >
