@@ -141,6 +141,7 @@ namespace jni
     inline void DeleteGlobalRef(JNIEnv& env, UniqueGlobalRef<jobject>&& ref)
        {
         env.DeleteGlobalRef(Unwrap(ref.release()));
+        CheckJavaException(env);
        }
 
 
@@ -178,6 +179,7 @@ namespace jni
     inline void DeleteWeakGlobalRef(JNIEnv& env, UniqueWeakGlobalRef<jobject>&& ref)
        {
         env.DeleteWeakGlobalRef(Unwrap(ref.release()));
+        CheckJavaException(env);
        }
 
 
