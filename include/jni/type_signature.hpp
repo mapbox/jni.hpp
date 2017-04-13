@@ -1,14 +1,14 @@
 #pragma once
 
 #include <jni/functions.hpp>
-#include <jni/object.hpp>
-#include <jni/array.hpp>
 
 #include <initializer_list>
 #include <string>
 
 namespace jni
    {
+    template < class TheTag > class Object;
+    template < class E, class Enable = void > class Array;
     template < class > struct TypeSignature;
 
     template <> struct TypeSignature< jboolean > { const char * operator()() const { return "Z"; } };
