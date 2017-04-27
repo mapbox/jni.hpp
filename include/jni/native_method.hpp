@@ -165,9 +165,9 @@ namespace jni
                {}
 
             template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
-            auto operator()(const Field<TagType, jlong>& field)
+            auto operator()(const TypedField<TagType, jlong>& field)
                {
-                auto wrapper = [field, lambda = lambda] (JNIEnv& env, Object<TagType> obj, Args... args)
+                auto wrapper = [field, lambda = lambda] (JNIEnv& env, TypedObject<TagType> obj, Args... args)
                    {
                     return lambda(env, *reinterpret_cast<P*>(obj.Get(env, field)), std::move(args)...);
                    };
@@ -201,9 +201,9 @@ namespace jni
                {}
 
             template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
-            auto operator()(const Field<TagType, jlong>& field)
+            auto operator()(const TypedField<TagType, jlong>& field)
                {
-                auto wrapper = [field] (JNIEnv& env, Object<TagType> obj, Args... args)
+                auto wrapper = [field] (JNIEnv& env, TypedObject<TagType> obj, Args... args)
                    {
                     return method(env, *reinterpret_cast<P*>(obj.Get(env, field)), std::move(args)...);
                    };
@@ -238,9 +238,9 @@ namespace jni
                {}
 
             template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
-            auto operator()(const Field<TagType, jlong>& field)
+            auto operator()(const TypedField<TagType, jlong>& field)
                {
-                auto wrapper = [field] (JNIEnv& env, Object<TagType> obj, Args... args)
+                auto wrapper = [field] (JNIEnv& env, TypedObject<TagType> obj, Args... args)
                    {
                     return (reinterpret_cast<P*>(obj.Get(env, field))->*method)(env, std::move(args)...);
                    };
@@ -279,9 +279,9 @@ namespace jni
      */
 
     template < class Peer, class TagType, class... Methods >
-    void RegisterNativePeer(JNIEnv& env, const Class<TagType>& clazz, const char* fieldName, Methods&&... methods)
+    void RegisterNativePeer(JNIEnv& env, const TypedClass<TagType>& clazz, const char* fieldName, Methods&&... methods)
        {
-        static Field<TagType, jni::jlong> field { env, clazz, fieldName };
+        static TypedField<TagType, jni::jlong> field { env, clazz, fieldName };
         RegisterNatives(env, clazz, methods.template operator()<Peer>(field)...);
        }
 
@@ -294,9 +294,9 @@ namespace jni
         using UniquePeer = std::unique_ptr<Peer>;
         using Initializer = UniquePeer (JNIEnv&, Args...);
 
-        auto MakeInitializer(const Field<TagType, jlong>& field, const char* name, Initializer* initializer) const
+        auto MakeInitializer(const TypedField<TagType, jlong>& field, const char* name, Initializer* initializer) const
            {
-            auto wrapper = [field, initializer] (JNIEnv& e, Object<TagType> obj, std::decay_t<Args>... args)
+            auto wrapper = [field, initializer] (JNIEnv& e, TypedObject<TagType> obj, std::decay_t<Args>... args)
                {
                 UniquePeer previous(reinterpret_cast<Peer*>(obj.Get(e, field)));
                 UniquePeer instance(initializer(e, std::move(args)...));
@@ -307,9 +307,9 @@ namespace jni
             return MakeNativeMethod(name, wrapper);
            }
 
-        auto MakeFinalizer(const Field<TagType, jlong>& field, const char* name) const
+        auto MakeFinalizer(const TypedField<TagType, jlong>& field, const char* name) const
            {
-            auto wrapper = [field] (JNIEnv& e, Object<TagType> obj)
+            auto wrapper = [field] (JNIEnv& e, TypedObject<TagType> obj)
                {
                 UniquePeer instance(reinterpret_cast<Peer*>(obj.Get(e, field)));
                 if (instance) obj.Set(e, field, jlong(0));
@@ -321,13 +321,13 @@ namespace jni
        };
 
     template < class Peer, class TagType, class Initializer, class... Methods >
-    void RegisterNativePeer(JNIEnv& env, const Class<TagType>& clazz, const char* fieldName,
+    void RegisterNativePeer(JNIEnv& env, const TypedClass<TagType>& clazz, const char* fieldName,
                             Initializer initialize,
                             const char* initializeMethodName,
                             const char* finalizeMethodName,
                             Methods&&... methods)
        {
-        static Field<TagType, jlong> field { env, clazz, fieldName };
+        static TypedField<TagType, jlong> field { env, clazz, fieldName };
 
         using InitializerMethodType = typename NativeMethodTraits<Initializer>::Type;
         NativePeerHelper<Peer, TagType, InitializerMethodType> helper;

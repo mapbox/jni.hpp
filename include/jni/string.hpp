@@ -13,7 +13,7 @@ namespace jni
     struct StringTag { static constexpr auto Name() { return "java/lang/String"; } };
 
     template <>
-    struct UntaggedObjectType<StringTag> { using Type = jstring; };
+    struct TypedUntaggedObjectType< TypeFromTag<StringTag> > { using Type = jstring; };
 
     using String = Object<StringTag>;
 

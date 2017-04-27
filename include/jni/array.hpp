@@ -82,11 +82,11 @@ namespace jni
        };
 
     template < class TheTag >
-    class Array< Object<TheTag> >
+    class Array< TypedObject<TheTag> >
        {
         public:
             using TagType = TheTag;
-            using ElementType = Object<TagType>;
+            using ElementType = TypedObject<TagType>;
             using UntaggedType = jarray<jobject>;
             using UntaggedElementType = typename ElementType::UntaggedObjectType;
 
@@ -124,12 +124,12 @@ namespace jni
                 SetObjectArrayElement(env, SafeDereference(env, array), index, Untag(value));
                }
 
-            static Array<Object<TheTag>> New(JNIEnv& env, jsize length, const Class<TheTag>& clazz, const Object<TheTag>& initialElement = Object<TheTag>())
+            static Array<TypedObject<TheTag>> New(JNIEnv& env, jsize length, const TypedClass<TheTag>& clazz, const TypedObject<TheTag>& initialElement = TypedObject<TheTag>())
                {
-                return Array<Object<TheTag>>(&NewObjectArray(env, length, clazz, initialElement.Get()));
+                return Array<TypedObject<TheTag>>(&NewObjectArray(env, length, clazz, initialElement.Get()));
                }
 
-            UniqueArray<Object<TheTag>> NewGlobalRef(JNIEnv& env) const
+            UniqueArray<TypedObject<TheTag>> NewGlobalRef(JNIEnv& env) const
                {
                 return Seize(env, Array(jni::NewGlobalRef(env, array).release()));
                }
