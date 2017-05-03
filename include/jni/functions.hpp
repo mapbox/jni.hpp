@@ -6,6 +6,7 @@
 #include <jni/ownership.hpp>
 #include <jni/typed_methods.hpp>
 #include <jni/arraylike.hpp>
+#include <jni/jdks.hpp>
 
 #include <type_traits>
 #include <cstdlib>
@@ -589,7 +590,7 @@ namespace jni
     inline UniqueEnv AttachCurrentThread(JavaVM& vm)
        {
         JNIEnv* result;
-        CheckErrorCode(vm.AttachCurrentThread(&result, nullptr));
+        CheckErrorCode(AttachCurrentThread(vm, &result, nullptr));
         return UniqueEnv(result, JNIEnvDeleter(vm));
        }
 
