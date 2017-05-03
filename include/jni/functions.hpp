@@ -589,7 +589,7 @@ namespace jni
     inline UniqueEnv AttachCurrentThread(JavaVM& vm)
        {
         JNIEnv* result;
-        CheckErrorCode(vm.AttachCurrentThread(&result, nullptr));
+        CheckErrorCode(vm.AttachCurrentThread(reinterpret_cast<void**>(&result), nullptr));
         return UniqueEnv(result, JNIEnvDeleter(vm));
        }
 
