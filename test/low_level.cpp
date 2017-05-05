@@ -217,8 +217,9 @@ static void TestMakeNativeMethod()
 //    jni::MakeNativeMethod("name", "sig", &Struct::StaticMethod );
 //    jni::MakeNativeMethod("name", "sig", Struct() );
 
-    jni::MakeNativeMethod< decltype(Method),                Method                >("name", "sig");
-    jni::MakeNativeMethod< decltype(StaticMethod),          StaticMethod          >("name", "sig");
+//    jni::MakeNativeMethod< decltype(Method),                Method                >("name", "sig");
+//    jni::MakeNativeMethod< decltype(StaticMethod),          StaticMethod          >("name", "sig");
+
     jni::MakeNativeMethod< decltype(&Method),               &Method               >("name", "sig");
     jni::MakeNativeMethod< decltype(&StaticMethod),         &StaticMethod         >("name", "sig");
     jni::MakeNativeMethod< decltype(&Struct::Method),       &Struct::Method       >("name", "sig");
