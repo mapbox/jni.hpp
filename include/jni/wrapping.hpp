@@ -138,7 +138,7 @@ namespace jni
        {
         ::JNINativeMethod Unwrap(JNINativeMethod<R (JNIEnv*, T*, Args...)> method) const
            {
-            return { method.name, method.signature, reinterpret_cast<void*>(method.fnPtr) };
+              return adapt(method);
            }
        };
 
