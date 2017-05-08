@@ -588,8 +588,23 @@ namespace jni
 
     inline UniqueEnv AttachCurrentThread(JavaVM& vm)
        {
+        // Some implementations type the parameter as JNIEnv**, others as void**.
+        // See https://bugs.openjdk.java.net/browse/JDK-6569899
+        struct JNIEnvCast
+          {
+           void** operator()(JNIEnv** env, jint (JavaVM::*)(void**, void*))
+             {
+              return reinterpret_cast<void**>(env);
+             }
+
+           JNIEnv** operator()(JNIEnv** env, jint (JavaVM::*)(JNIEnv**, void*))
+             {
+              return env;
+             }
+          };
+
         JNIEnv* result;
-        CheckErrorCode(vm.AttachCurrentThread(&result, nullptr));
+        CheckErrorCode(vm.AttachCurrentThread(JNIEnvCast()(&result, &JavaVM::AttachCurrentThread), nullptr));
         return UniqueEnv(result, JNIEnvDeleter(vm));
        }
 
