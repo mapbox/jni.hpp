@@ -1,8 +1,10 @@
 CFLAGS = $(env CFLAGS) -Iinclude --std=c++14 -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-exit-time-destructors -Werror
 
 test:
-	$(CXX) -o tst $(CFLAGS) -Itest -g -Wno-padded test/low_level.cpp && ./tst
-	$(CXX) -o tst $(CFLAGS) -Itest -g -Wno-padded test/high_level.cpp && ./tst
+	$(CXX) -o tst $(CFLAGS) -Itest/android -g -Wno-padded test/low_level.cpp && ./tst
+	$(CXX) -o tst $(CFLAGS) -Itest/android -g -Wno-padded test/high_level.cpp && ./tst
+	$(CXX) -o tst $(CFLAGS) -Itest/openjdk -g -Wno-padded -Wno-reserved-id-macro test/low_level.cpp && ./tst
+	$(CXX) -o tst $(CFLAGS) -Itest/openjdk -g -Wno-padded -Wno-reserved-id-macro test/high_level.cpp && ./tst
 
 .PHONY: test
 

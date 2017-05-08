@@ -13,6 +13,5 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 
-The above license excludes the file test/jni.h, which is included for testing
-purposes. This file is Copyright (C) 2006 The Android Open Source Project,
-Licensed under the Apache License.
+The above license excludes the files test/android/jni.h and test/openjdk/jni.h, which are
+included for testing purposes and covered by their respective copyrights and licenses.
