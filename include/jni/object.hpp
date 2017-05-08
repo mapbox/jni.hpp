@@ -1,6 +1,7 @@
 #pragma once
 
 #include <jni/functions.hpp>
+#include <jni/type.hpp>
 #include <jni/tagging.hpp>
 #include <jni/pointer_to_value.hpp>
 
@@ -8,55 +9,70 @@
 
 namespace jni
    {
-    template < class TheTag > class Class;
-    template < class TheTag, class > class Field;
-    template < class TheTag, class > class Method;
+    template < class TagType > class TypedClass;
+    template < class TagType, class > class TypedField;
+    template < class TagType, class > class TypedMethod;
 
     struct ObjectTag { static constexpr auto Name() { return "java/lang/Object"; } };
 
     template < class TagType >
-    struct UntaggedObjectType { using Type = jobject; };
+    struct TypedUntaggedObjectType;
 
-    template < class TheTag >
-    class Object;
+    template <char... Chars>
+    struct TypedUntaggedObjectType<Type<Chars...>> { using Type = jobject; };
 
-    template < class TagType >
-    class ObjectDeleter;
-
-    template < class TagType = ObjectTag >
-    using UniqueObject = std::unique_ptr< const Object<TagType>, ObjectDeleter<TagType> >;
+    template < class TagType = TypeFromTag<ObjectTag> >
+    class TypedObject;
 
     template < class TagType >
-    class WeakObjectRefDeleter;
+    class TypedObjectDeleter;
 
-    template < class TagType = ObjectTag >
-    using UniqueWeakObject = std::unique_ptr< const Object<TagType>, WeakObjectRefDeleter<TagType> >;
+    template < class TagType = TypeFromTag<ObjectTag> >
+    using TypedUniqueObject = std::unique_ptr< const TypedObject<TagType>, TypedObjectDeleter<TagType> >;
+
+    template < class Tag = ObjectTag >
+    using UniqueObject = TypedUniqueObject< TypeFromTag<Tag> >;
 
     template < class TagType >
-    class LocalObjectRefDeleter;
+    class TypedWeakObjectRefDeleter;
 
-    template < class TagType = ObjectTag >
-    using UniqueLocalObject = std::unique_ptr< const Object<TagType>, LocalObjectRefDeleter<TagType> >;
+    template < class TagType = TypeFromTag<ObjectTag> >
+    using TypedUniqueWeakObject = std::unique_ptr< const TypedObject<TagType>, TypedWeakObjectRefDeleter<TagType> >;
 
-    template < class TheTag = ObjectTag >
-    class Object
+    template < class Tag = ObjectTag >
+    using UniqueWeakObject = TypedUniqueWeakObject< TypeFromTag<Tag> >;
+
+    template < class TagType >
+    class TypedLocalObjectRefDeleter;
+
+    template < class TagType = TypeFromTag<ObjectTag> >
+    using TypedUniqueLocalObject = std::unique_ptr< const TypedObject<TagType>, TypedLocalObjectRefDeleter<TagType> >;
+
+    template < class Tag = ObjectTag >
+    using UniqueLocalObject = TypedUniqueLocalObject< TypeFromTag<Tag> >;
+
+    template < class Tag = ObjectTag >
+    using Object = TypedObject< TypeFromTag<Tag> >;
+
+    template < char... Chars >
+    class TypedObject< Type<Chars...> >
        {
         public:
-            using TagType = TheTag;
-            using UntaggedObjectType = typename UntaggedObjectType<TagType>::Type;
+            using TagType = Type<Chars...>;
+            using UntaggedObjectType = typename TypedUntaggedObjectType<TagType>::Type;
 
         private:
             UntaggedObjectType* obj = nullptr;
 
         public:
-            explicit Object(std::nullptr_t = nullptr)
+            explicit TypedObject(std::nullptr_t = nullptr)
                {}
 
-            explicit Object(UntaggedObjectType* o)
+            explicit TypedObject(UntaggedObjectType* o)
                : obj(o)
                {}
 
-            explicit Object(UntaggedObjectType& o)
+            explicit TypedObject(UntaggedObjectType& o)
                : obj(&o)
                {}
 
@@ -66,110 +82,113 @@ namespace jni
             UntaggedObjectType& operator*() const { return *obj; }
             UntaggedObjectType* Get() const { return obj; }
 
-            friend bool operator==( const Object& a, const Object& b )  { return a.Get() == b.Get(); }
-            friend bool operator!=( const Object& a, const Object& b )  { return !( a == b ); }
+            friend bool operator==( const TypedObject& a, const TypedObject& b )  { return a.Get() == b.Get(); }
+            friend bool operator!=( const TypedObject& a, const TypedObject& b )  { return !( a == b ); }
 
             template < class T >
-            auto Get(JNIEnv& env, const Field<TagType, T>& field) const
+            auto Get(JNIEnv& env, const TypedField<TagType, T>& field) const
                -> std::enable_if_t< IsPrimitive<T>::value, T >
                {
                 return GetField<T>(env, obj, field);
                }
 
             template < class T >
-            auto Get(JNIEnv& env, const Field<TagType, T>& field) const
+            auto Get(JNIEnv& env, const TypedField<TagType, T>& field) const
                -> std::enable_if_t< !IsPrimitive<T>::value, T >
                {
                 return T(reinterpret_cast<UntaggedType<T>>(GetField<jobject*>(env, obj, field)));
                }
 
             template < class T >
-            auto Set(JNIEnv& env, const Field<TagType, T>& field, T value) const
+            auto Set(JNIEnv& env, const TypedField<TagType, T>& field, T value) const
                -> std::enable_if_t< IsPrimitive<T>::value >
                {
                 SetField<T>(env, obj, field, value);
                }
 
             template < class T >
-            auto Set(JNIEnv& env, const Field<TagType, T>& field, const T& value) const
+            auto Set(JNIEnv& env, const TypedField<TagType, T>& field, const T& value) const
                -> std::enable_if_t< !IsPrimitive<T>::value >
                {
                 SetField<jobject*>(env, obj, field, value.Get());
                }
 
             template < class R, class... Args >
-            auto Call(JNIEnv& env, const Method<TagType, R (Args...)>& method, const Args&... args) const
+            auto Call(JNIEnv& env, const TypedMethod<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
                 return CallMethod<R>(env, obj, method, Untag(args)...);
                }
 
             template < class R, class... Args >
-            auto Call(JNIEnv& env, const Method<TagType, R (Args...)>& method, const Args&... args) const
+            auto Call(JNIEnv& env, const TypedMethod<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< !IsPrimitive<R>::value, R >
                {
                 return R(reinterpret_cast<UntaggedType<R>>(CallMethod<jobject*>(env, obj, method, Untag(args)...)));
                }
 
             template < class... Args >
-            void Call(JNIEnv& env, const Method<TagType, void (Args...)>& method, const Args&... args) const
+            void Call(JNIEnv& env, const TypedMethod<TagType, void (Args...)>& method, const Args&... args) const
                {
                 CallMethod<void>(env, obj, method, Untag(args)...);
                }
 
             template < class R, class... Args >
-            auto CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, R (Args...)>& method, const Args&... args) const
+            auto CallNonvirtual(JNIEnv& env, const TypedClass<TagType>& clazz, const TypedMethod<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
                 return CallNonvirtualMethod<R>(env, obj, clazz, method, Untag(args)...);
                }
 
             template < class R, class... Args >
-            auto CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, R (Args...)>& method, const Args&... args) const
+            auto CallNonvirtual(JNIEnv& env, const TypedClass<TagType>& clazz, const TypedMethod<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< !IsPrimitive<R>::value, R >
                {
                 return R(reinterpret_cast<UntaggedType<R>>(CallNonvirtualMethod<jobject*>(env, obj, clazz, method, Untag(args)...)));
                }
 
             template < class... Args >
-            void CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, void (Args...)>& method, const Args&... args) const
+            void CallNonvirtual(JNIEnv& env, const TypedClass<TagType>& clazz, const TypedMethod<TagType, void (Args...)>& method, const Args&... args) const
                {
                 CallNonvirtualMethod<void>(env, obj, clazz, method, Untag(args)...);
                }
 
-            UniqueObject<TagType> NewGlobalRef(JNIEnv& env) const
+            TypedUniqueObject<TagType> NewGlobalRef(JNIEnv& env) const
                {
-                return Seize(env, Object(jni::NewGlobalRef(env, obj).release()));
+                return Seize(env, TypedObject(jni::NewGlobalRef(env, obj).release()));
                }
 
-            UniqueWeakObject<TagType> NewWeakGlobalRef(JNIEnv& env) const
+            TypedUniqueWeakObject<TagType> NewWeakGlobalRef(JNIEnv& env) const
                {
-                return SeizeWeakRef(env, Object(jni::NewWeakGlobalRef(env, obj).release()));
+                return SeizeWeakRef(env, TypedObject(jni::NewWeakGlobalRef(env, obj).release()));
                }
 
-            UniqueLocalObject<TagType> NewLocalRef(JNIEnv& env) const
+            TypedUniqueLocalObject<TagType> NewLocalRef(JNIEnv& env) const
                {
-                return SeizeLocalRef(env, Object(jni::NewLocalRef(env, obj).release()));
+                return SeizeLocalRef(env, TypedObject(jni::NewLocalRef(env, obj).release()));
                }
 
             template < class OtherTag >
-            bool IsInstanceOf(JNIEnv& env, const Class<OtherTag>& clazz) const
+            bool IsInstanceOf(JNIEnv& env, const TypedClass<OtherTag>& clazz) const
                {
                 return jni::IsInstanceOf(env, obj, clazz);
                }
        };
 
-    template < class TagType >
-    class ObjectDeleter
+    template < class Tag = ObjectTag >
+    using ObjectDeleter = TypedObjectDeleter< TypeFromTag<Tag> >;
+
+    template < char... Chars >
+    class TypedObjectDeleter< Type<Chars...> >
        {
         private:
             JNIEnv* env = nullptr;
 
         public:
-            using pointer = PointerToValue< Object<TagType> >;
+            using pointer = PointerToValue< TypedObject< Type<Chars...> > >;
 
-            ObjectDeleter() = default;
-            ObjectDeleter(JNIEnv& e) : env(&e) {}
+            TypedObjectDeleter() = default;
+            TypedObjectDeleter(JNIEnv& e) : env(&e) {}
 
             void operator()(pointer p) const
                {
@@ -182,22 +201,25 @@ namespace jni
        };
 
     template < class TagType >
-    UniqueObject<TagType> Seize(JNIEnv& env, Object<TagType>&& object)
+    TypedUniqueObject<TagType> Seize(JNIEnv& env, TypedObject<TagType>&& object)
        {
-        return UniqueObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), ObjectDeleter<TagType>(env));
+        return TypedUniqueObject<TagType>(PointerToValue<TypedObject<TagType>>(std::move(object)), TypedObjectDeleter<TagType>(env));
        };
 
-    template < class TagType >
-    class WeakObjectRefDeleter
+    template < class Tag = ObjectTag >
+    using WeakObjectRefDeleter = TypedWeakObjectRefDeleter< TypeFromTag<Tag> >;
+
+    template < char... Chars >
+    class TypedWeakObjectRefDeleter< Type<Chars...> >
        {
         private:
             JNIEnv* env = nullptr;
 
         public:
-            using pointer = PointerToValue< Object<TagType> >;
+            using pointer = PointerToValue< TypedObject< Type<Chars...> > >;
 
-            WeakObjectRefDeleter() = default;
-            WeakObjectRefDeleter(JNIEnv& e) : env(&e) {}
+            TypedWeakObjectRefDeleter() = default;
+            TypedWeakObjectRefDeleter(JNIEnv& e) : env(&e) {}
 
             void operator()(pointer p) const
                {
@@ -210,22 +232,25 @@ namespace jni
        };
 
     template < class TagType >
-    UniqueWeakObject<TagType> SeizeWeakRef(JNIEnv& env, Object<TagType>&& object)
+    TypedUniqueWeakObject<TagType> SeizeWeakRef(JNIEnv& env, TypedObject<TagType>&& object)
        {
-        return UniqueWeakObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), WeakObjectRefDeleter<TagType>(env));
+        return TypedUniqueWeakObject<TagType>(PointerToValue<TypedObject<TagType>>(std::move(object)), TypedWeakObjectRefDeleter<TagType>(env));
        };
 
-    template < class TagType >
-    class LocalObjectRefDeleter
+    template < class Tag = ObjectTag >
+    using LocalObjectRefDeleter = TypedLocalObjectRefDeleter< TypeFromTag<Tag> >;
+
+    template < char... Chars >
+    class TypedLocalObjectRefDeleter< Type<Chars...> >
        {
         private:
             JNIEnv* env = nullptr;
 
         public:
-            using pointer = PointerToValue< Object<TagType> >;
+            using pointer = PointerToValue< TypedObject< Type<Chars...> > >;
 
-            LocalObjectRefDeleter() = default;
-            LocalObjectRefDeleter(JNIEnv& e) : env(&e) {}
+            TypedLocalObjectRefDeleter() = default;
+            TypedLocalObjectRefDeleter(JNIEnv& e) : env(&e) {}
 
             void operator()(pointer p) const
                {
@@ -238,14 +263,14 @@ namespace jni
        };
 
     template < class TagType >
-    UniqueLocalObject<TagType> SeizeLocalRef(JNIEnv& env, Object<TagType>&& object)
+    TypedUniqueLocalObject<TagType> SeizeLocalRef(JNIEnv& env, TypedObject<TagType>&& object)
        {
-        return UniqueLocalObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), LocalObjectRefDeleter<TagType>(env));
+        return TypedUniqueLocalObject<TagType>(PointerToValue<TypedObject<TagType>>(std::move(object)), TypedLocalObjectRefDeleter<TagType>(env));
        };
 
 
     template < class OutTagType, class InTagType >
-    Object<OutTagType> Cast(JNIEnv& env, const Object<InTagType>& object, const Class<OutTagType>& clazz)
+    TypedObject<OutTagType> Cast(JNIEnv& env, const TypedObject<InTagType>& object, const TypedClass<OutTagType>& clazz)
        {
         if (!object.IsInstanceOf(env, clazz))
            {

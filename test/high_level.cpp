@@ -63,7 +63,7 @@ int main()
 
     env.functions->FindClass = [] (JNIEnv*, const char* name) -> jclass
        {
-        assert(name == Test::Name());
+        assert(strcmp(name, Test::Name()) == 0);
         return Unwrap(classValue.Ptr());
        };
 

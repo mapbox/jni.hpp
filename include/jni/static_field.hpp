@@ -8,16 +8,22 @@
 
 namespace jni
    {
-    template < class TheTag, class T >
-    class StaticField
+    template < class TagType, class T >
+    class TypedStaticField;
+
+    template < class Tag, class T >
+    using StaticField = TypedStaticField< TypeFromTag<Tag>, T >;
+
+    template <char... Chars, class T>
+    class TypedStaticField< Type<Chars...>, T >
        {
         private:
             jfieldID& field;
 
         public:
-            using TagType = TheTag;
+            using TagType = Type<Chars...>;
 
-            StaticField(JNIEnv& env, const Class<TagType>& clazz, const char* name)
+            TypedStaticField(JNIEnv& env, const TypedClass<TagType>& clazz, const char* name)
               : field(GetStaticFieldID(env, clazz, name, TypeSignature<T>()()))
                {}
 

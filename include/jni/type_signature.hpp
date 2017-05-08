@@ -21,13 +21,13 @@ namespace jni
     template <> struct TypeSignature< jdouble  > { const char * operator()() const { return "D"; } };
     template <> struct TypeSignature< void     > { const char * operator()() const { return "V"; } };
 
-    template < class TheTag >
-    struct TypeSignature< Object<TheTag> >
+    template < char... Chars >
+    struct TypeSignature< TypedObject< Type<Chars...> > >
        {
         const char * operator()() const
            {
-            static std::string value { std::string("L") + TheTag::Name() + ";" };
-            return value.c_str();
+            static constexpr const char value[] = { 'L', Chars..., ';', '\0' };
+            return value;
            }
        };
 

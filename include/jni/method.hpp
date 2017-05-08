@@ -8,19 +8,22 @@
 
 namespace jni
    {
-    template < class TheTag, class >
-    class Method;
+    template < class TagType, class >
+    class TypedMethod;
 
-    template < class TheTag, class R, class... Args >
-    class Method< TheTag, R (Args...) >
+    template < class Tag, class R, class... Args >
+    using Method = TypedMethod< TypeFromTag<Tag>, R (Args...) >;
+
+    template < char... Chars, class R, class... Args >
+    class TypedMethod< Type<Chars...>, R (Args...) >
        {
         private:
             jmethodID& method;
 
         public:
-            using TagType = TheTag;
+            using TagType = Type<Chars...>;
 
-            Method(JNIEnv& env, const Class<TagType>& clazz, const char* name)
+            TypedMethod(JNIEnv& env, const TypedClass<TagType>& clazz, const char* name)
               : method(GetMethodID(env, clazz, name, TypeSignature<R (Args...)>()()))
                {}
 
