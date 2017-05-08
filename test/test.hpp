@@ -1,5 +1,9 @@
 #include <jni/types.hpp>
 
+#ifdef _JAVASOFT_JNI_H_
+using JNINativeInterface = JNINativeInterface_;
+#endif
+
 template < class T >
 struct Testable
    {
@@ -12,8 +16,9 @@ struct Testable
 struct TestEnv : public jni::JNIEnv
    {
     TestEnv()
+       : jni::JNIEnv { new JNINativeInterface },
+         functions(const_cast<JNINativeInterface*>(jni::JNIEnv::functions))
        {
-        functions = new JNINativeInterface;
         functions->ExceptionCheck = [] (JNIEnv* env) -> jboolean
            {
             return reinterpret_cast<TestEnv*>(env)->exception ? JNI_TRUE : JNI_FALSE;
@@ -23,6 +28,7 @@ struct TestEnv : public jni::JNIEnv
     ~TestEnv() { delete functions; }
 
     bool exception = false;
+    JNINativeInterface* functions;
    };
 
 template < class E, class Fn >
