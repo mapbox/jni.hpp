@@ -124,7 +124,6 @@ namespace jni
 
 
     /// High-level, function pointer
-
     template < class R, class Subject, class... Args, R (*method)(JNIEnv&, Subject, Args...) >
     struct NativeMethodMaker< R (JNIEnv&, Subject, Args...), method >
        {
