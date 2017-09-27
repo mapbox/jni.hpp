@@ -107,31 +107,31 @@ namespace jni
                }
 
             template < class... Args >
-            Constructor<TagType, Args...> GetConstructor(JNIEnv& env)
+            Constructor<TagType, Args...> GetConstructor(JNIEnv& env) const
                {
                 return Constructor<TagType, Args...>(env, *this);
                }
 
             template < class T >
-            Field<TagType, T> GetField(JNIEnv& env, const char* name)
+            Field<TagType, T> GetField(JNIEnv& env, const char* name) const
                {
                 return Field<TagType, T>(env, *this, name);
                }
 
             template < class T >
-            StaticField<TagType, T> GetStaticField(JNIEnv& env, const char* name)
+            StaticField<TagType, T> GetStaticField(JNIEnv& env, const char* name) const
                {
                 return StaticField<TagType, T>(env, *this, name);
                }
 
             template < class T >
-            Method<TagType, T> GetMethod(JNIEnv& env, const char* name)
+            Method<TagType, T> GetMethod(JNIEnv& env, const char* name) const
                {
                 return Method<TagType, T>(env, *this, name);
                }
 
             template < class T >
-            StaticMethod<TagType, T> GetStaticMethod(JNIEnv& env, const char* name)
+            StaticMethod<TagType, T> GetStaticMethod(JNIEnv& env, const char* name) const
                {
                 return StaticMethod<TagType, T>(env, *this, name);
                }
