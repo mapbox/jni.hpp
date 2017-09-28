@@ -19,6 +19,8 @@ namespace jni
 
         public:
             using TagType = TheTag;
+            using MethodType = R (Args...);
+            using ReturnType = R;
 
             StaticMethod(JNIEnv& env, const Class<TagType>& clazz, const char* name)
               : method(GetStaticMethodID(env, clazz, name, TypeSignature<R (Args...)>()()))
