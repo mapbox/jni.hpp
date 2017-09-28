@@ -16,6 +16,7 @@ namespace jni
 
         public:
             using TagType = TheTag;
+            using FieldType = T;
 
             StaticField(JNIEnv& env, const Class<TagType>& clazz, const char* name)
               : field(GetStaticFieldID(env, clazz, name, TypeSignature<T>()()))
