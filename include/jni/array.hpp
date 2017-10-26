@@ -180,4 +180,22 @@ namespace jni
         SetArrayRegion(env, *result, 0, array);
         return result;
        }
+
+    inline
+    std::string MakeAnything(ThingToMake<std::string>, JNIEnv& env, const Array<jbyte>& array)
+       {
+        NullCheck(env, array.Get());
+        std::string result;
+        result.resize(GetArrayLength(env, *array));
+        GetArrayRegion(env, *array, 0, result.size(), reinterpret_cast<jbyte*>(&result[0]));
+        return result;
+       }
+
+    inline
+    Array<jbyte> MakeAnything(ThingToMake<Array<jbyte>>, JNIEnv& env, const std::string& string)
+       {
+        Array<jbyte> result(&NewArray<jbyte>(env, string.size()));
+        SetArrayRegion(env, *result, 0, string.size(), reinterpret_cast<const jbyte*>(&string[0]));
+        return result;
+       }
    }
