@@ -593,6 +593,23 @@ int main()
     assert(booleanArray.Length(env) == 42);
     assert(booleanArray.Get(env, 0) == jni::jni_true);
 
+    static Testable<jni::jarray<jni::jbyte>> byteArrayValue;
+
+    env.functions->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
+       {
+        assert(array == jni::Unwrap(byteArrayValue.Ptr()));
+        return 42;
+       };
+
+    env.functions->GetByteArrayRegion = [] (JNIEnv*, jbyteArray, jsize, jsize, jbyte* buf)
+       {
+        *buf = 's';
+       };
+
+    jni::Array<jni::jbyte> byteArray { byteArrayValue.Ptr() };
+    assert(byteArray.Length(env) == 42);
+    assert(byteArray.Get(env, 0) == 's');
+
 
     /// Object Array
 
@@ -744,6 +761,39 @@ int main()
 
     std::vector<jboolean> vec = { jni::jni_true };
     assert(jni::Make<std::vector<jboolean>>(env, jni::Make<jni::Array<jni::jboolean>>(env, vec)) == vec);
+
+
+    env.functions->NewByteArray = [] (JNIEnv*, jsize) -> jbyteArray
+       {
+        return jni::Unwrap(byteArrayValue.Ptr());
+       };
+
+    env.functions->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
+       {
+        assert(array == jni::Unwrap(byteArrayValue.Ptr()));
+        return 1;
+       };
+
+    env.functions->GetByteArrayRegion = [] (JNIEnv*, jbyteArray array, jsize start, jsize len, jbyte* buf)
+       {
+        assert(array == jni::Unwrap(byteArrayValue.Ptr()));
+        assert(start == 0);
+        assert(len == 1);
+        *buf = 's';
+       };
+
+    env.functions->SetByteArrayRegion = [] (JNIEnv*, jbyteArray array, jsize start, jsize len, const jbyte* buf)
+       {
+        assert(array == jni::Unwrap(byteArrayValue.Ptr()));
+        assert(start == 0);
+        assert(len == 1);
+        assert(*buf == 's');
+       };
+
+    std::vector<jbyte> byte_vec = { 's' };
+    assert(jni::Make<std::vector<jbyte>>(env, jni::Make<jni::Array<jni::jbyte>>(env, byte_vec)) == byte_vec);
+    std::string str("s");
+    assert(jni::Make<std::string>(env, jni::Make<jni::Array<jni::jbyte>>(env, str)) == str);
 
 
     jni::MakeNativeMethod<decltype(&Method), &Method>("name");
