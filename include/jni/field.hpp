@@ -12,16 +12,20 @@ namespace jni
     class Field
        {
         private:
-            jfieldID& field;
+            jfieldID* field;
 
         public:
             using TagType = TheTag;
             using FieldType = T;
 
-            Field(JNIEnv& env, const Class<TagType>& clazz, const char* name)
-              : field(GetFieldID(env, clazz, name, TypeSignature<T>()()))
+            Field()
+              : field(nullptr)
                {}
 
-            operator jfieldID&() const { return field; }
+            Field(JNIEnv& env, const Class<TagType>& clazz, const char* name)
+              : field(&GetFieldID(env, clazz, name, TypeSignature<T>()()))
+               {}
+
+            operator jfieldID&() const { return *field; }
        };
    }

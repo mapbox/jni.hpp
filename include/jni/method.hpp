@@ -15,17 +15,21 @@ namespace jni
     class Method< TheTag, R (Args...) >
        {
         private:
-            jmethodID& method;
+            jmethodID* method;
 
         public:
             using TagType = TheTag;
             using MethodType = R (Args...);
             using ReturnType = R;
 
-            Method(JNIEnv& env, const Class<TagType>& clazz, const char* name)
-              : method(GetMethodID(env, clazz, name, TypeSignature<R (Args...)>()()))
+            Method()
+              : method(nullptr)
                {}
 
-            operator jmethodID&() const { return method; }
+            Method(JNIEnv& env, const Class<TagType>& clazz, const char* name)
+              : method(&GetMethodID(env, clazz, name, TypeSignature<R (Args...)>()()))
+               {}
+
+            operator jmethodID&() const { return *method; }
        };
    }
