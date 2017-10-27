@@ -12,16 +12,20 @@ namespace jni
     class StaticField
        {
         private:
-            jfieldID& field;
+            jfieldID* field;
 
         public:
             using TagType = TheTag;
             using FieldType = T;
 
-            StaticField(JNIEnv& env, const Class<TagType>& clazz, const char* name)
-              : field(GetStaticFieldID(env, clazz, name, TypeSignature<T>()()))
+            StaticField()
+              : field(nullptr)
                {}
 
-            operator jfieldID&() const { return field; }
+            StaticField(JNIEnv& env, const Class<TagType>& clazz, const char* name)
+              : field(&GetStaticFieldID(env, clazz, name, TypeSignature<T>()()))
+               {}
+
+            operator jfieldID&() const { return *field; }
        };
    }
