@@ -60,6 +60,11 @@ namespace jni
                : obj(&o)
                {}
 
+            template < class Tag >
+            Object(const Object<Tag>& o, std::enable_if_t< std::is_convertible<Tag, TagType>::value >* = 0)
+               : obj(o.Get())
+               {}
+
             explicit operator bool() const { return obj; }
 
             operator UntaggedObjectType*() const { return obj; }

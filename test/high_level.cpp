@@ -21,6 +21,9 @@ namespace
         void Void(jni::JNIEnv&, jni::jboolean b) { assert(b == jni::jni_true); }
         static void Static(jni::JNIEnv&, Peer&) {}
        };
+
+    struct Base {};
+    struct Derived : public Base {};
    }
 
 int main()
@@ -120,6 +123,10 @@ int main()
     string.NewWeakGlobalRef(env);
     string.NewLocalRef(env);
 
+    jni::Object<Derived> derived;
+    jni::Object<Base> base(derived);
+    base = derived;
+    (void)[] () -> jni::Object<Base> { return jni::Object<Derived>(); };
 
     /// Constructor
 
