@@ -30,15 +30,15 @@ int main()
    {
     /// TypeSignature
 
-    assert(jni::TypeSignature< jni::jboolean >()() == "Z");
-    assert(jni::TypeSignature< jni::jbyte    >()() == "B");
-    assert(jni::TypeSignature< jni::jchar    >()() == "C");
-    assert(jni::TypeSignature< jni::jshort   >()() == "S");
-    assert(jni::TypeSignature< jni::jint     >()() == "I");
-    assert(jni::TypeSignature< jni::jlong    >()() == "J");
-    assert(jni::TypeSignature< jni::jfloat   >()() == "F");
-    assert(jni::TypeSignature< jni::jdouble  >()() == "D");
-    assert(jni::TypeSignature< void          >()() == "V");
+    assert(jni::TypeSignature< jni::jboolean >()() == std::string("Z"));
+    assert(jni::TypeSignature< jni::jbyte    >()() == std::string("B"));
+    assert(jni::TypeSignature< jni::jchar    >()() == std::string("C"));
+    assert(jni::TypeSignature< jni::jshort   >()() == std::string("S"));
+    assert(jni::TypeSignature< jni::jint     >()() == std::string("I"));
+    assert(jni::TypeSignature< jni::jlong    >()() == std::string("J"));
+    assert(jni::TypeSignature< jni::jfloat   >()() == std::string("F"));
+    assert(jni::TypeSignature< jni::jdouble  >()() == std::string("D"));
+    assert(jni::TypeSignature< void          >()() == std::string("V"));
 
     assert(jni::TypeSignature< jni::Object<>  >()() == std::string("Ljava/lang/Object;"));
     assert(jni::TypeSignature< jni::String    >()() == std::string("Ljava/lang/String;"));
