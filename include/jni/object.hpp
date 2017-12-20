@@ -190,7 +190,7 @@ namespace jni
     UniqueObject<TagType> Seize(JNIEnv& env, Object<TagType>&& object)
        {
         return UniqueObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), ObjectDeleter<TagType>(env));
-       };
+       }
 
     template < class TagType >
     class WeakObjectRefDeleter
@@ -218,7 +218,7 @@ namespace jni
     UniqueWeakObject<TagType> SeizeWeakRef(JNIEnv& env, Object<TagType>&& object)
        {
         return UniqueWeakObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), WeakObjectRefDeleter<TagType>(env));
-       };
+       }
 
     template < class TagType >
     class LocalObjectRefDeleter
@@ -246,7 +246,7 @@ namespace jni
     UniqueLocalObject<TagType> SeizeLocalRef(JNIEnv& env, Object<TagType>&& object)
        {
         return UniqueLocalObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), LocalObjectRefDeleter<TagType>(env));
-       };
+       }
 
 
     template < class OutTagType, class InTagType >
