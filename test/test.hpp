@@ -17,18 +17,18 @@ struct TestEnv : public jni::JNIEnv
    {
     TestEnv()
        : jni::JNIEnv { new JNINativeInterface },
-         functions(const_cast<JNINativeInterface*>(jni::JNIEnv::functions))
+         fns(const_cast<JNINativeInterface*>(jni::JNIEnv::functions))
        {
-        functions->ExceptionCheck = [] (JNIEnv* env) -> jboolean
+        fns->ExceptionCheck = [] (JNIEnv* env) -> jboolean
            {
             return reinterpret_cast<TestEnv*>(env)->exception ? JNI_TRUE : JNI_FALSE;
            };
        }
 
-    ~TestEnv() { delete functions; }
+    ~TestEnv() { delete fns; }
 
     bool exception = false;
-    JNINativeInterface* functions;
+    JNINativeInterface* fns;
    };
 
 template < class E, class Fn >

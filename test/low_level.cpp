@@ -9,7 +9,7 @@ static void TestGetVersion()
     static jint version = 0x00010001;
     static TestEnv env;
 
-    env.functions->GetVersion = [] (JNIEnv*) -> jint { return version; };
+    env.fns->GetVersion = [] (JNIEnv*) -> jint { return version; };
     assert(jni::GetVersion(env) == version);
    }
 
@@ -20,7 +20,7 @@ static void TestDefineClass()
     static Testable<jni::jobject> loader;
     static TestEnv env;
 
-    env.functions->DefineClass = [] (JNIEnv*, const char* name, jobject, const jbyte*, jsize) -> jclass
+    env.fns->DefineClass = [] (JNIEnv*, const char* name, jobject, const jbyte*, jsize) -> jclass
        {
         if (name == className) return Unwrap(classValue.Ptr());
         env.exception = true;  return nullptr;
@@ -36,7 +36,7 @@ static void TestFindClass()
     static Testable<jni::jclass> classValue;
     static TestEnv env;
 
-    env.functions->FindClass = [] (JNIEnv*, const char* name) -> jclass
+    env.fns->FindClass = [] (JNIEnv*, const char* name) -> jclass
        {
         if (name == className) return Unwrap(classValue.Ptr());
         env.exception = true;  return nullptr;
@@ -53,7 +53,7 @@ static void TestNewAndDeleteGlobalRef()
     static Testable<jni::jobject> failureValue;
     static TestEnv env;
 
-    env.functions->NewGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
+    env.fns->NewGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
        {
         if (obj == Unwrap(objectValue.Ptr()))
             return Unwrap(objectValue.Ptr());
@@ -63,7 +63,7 @@ static void TestNewAndDeleteGlobalRef()
         return nullptr;
        };
 
-    env.functions->DeleteGlobalRef = [] (JNIEnv*, jobject obj) -> void
+    env.fns->DeleteGlobalRef = [] (JNIEnv*, jobject obj) -> void
        {
         if (obj == Unwrap(objectValue.Ptr()))
             return;
@@ -84,7 +84,7 @@ static void TestNewAndDeleteWeakGlobalRef()
     static Testable<jni::jobject> failureValue;
     static TestEnv env;
 
-    env.functions->NewWeakGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
+    env.fns->NewWeakGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
        {
         if (obj == Unwrap(objectValue.Ptr()))
             return Unwrap(objectValue.Ptr());
@@ -94,7 +94,7 @@ static void TestNewAndDeleteWeakGlobalRef()
         return nullptr;
        };
 
-    env.functions->DeleteWeakGlobalRef = [] (JNIEnv*, jobject obj) -> void
+    env.fns->DeleteWeakGlobalRef = [] (JNIEnv*, jobject obj) -> void
        {
         if (obj == Unwrap(objectValue.Ptr()))
             return;
@@ -116,7 +116,7 @@ static void TestNewObject()
     static Testable<jni::jobject> objectValue;
     static TestEnv env;
 
-    env.functions->NewObjectV = [] (JNIEnv*, jclass clazz, jmethodID, va_list) -> jobject
+    env.fns->NewObjectV = [] (JNIEnv*, jclass clazz, jmethodID, va_list) -> jobject
        {
         if (clazz == Unwrap(classValue.Ptr()))
             return Unwrap(objectValue.Ptr());
@@ -134,7 +134,7 @@ static void TestGetArrayLength()
     static Testable<jni::jarray<jni::jobject>> failureValue;
     static TestEnv env;
 
-    env.functions->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
+    env.fns->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
        {
         if (array == jni::Unwrap(arrayValue.Ptr()))
             return 42;
@@ -151,12 +151,12 @@ static void TestArrayElements()
     static Testable<jni::jarray<jni::jboolean>> arrayValue;
     static TestEnv env;
 
-    env.functions->GetBooleanArrayElements = [] (JNIEnv*, jbooleanArray, jboolean*) -> jboolean*
+    env.fns->GetBooleanArrayElements = [] (JNIEnv*, jbooleanArray, jboolean*) -> jboolean*
        {
         return nullptr;
        };
 
-    env.functions->ReleaseBooleanArrayElements = [] (JNIEnv*, jbooleanArray, jboolean*, jint)
+    env.fns->ReleaseBooleanArrayElements = [] (JNIEnv*, jbooleanArray, jboolean*, jint)
        {
        };
 
@@ -170,7 +170,7 @@ static void TestArrayRegion()
     static Testable<jni::jarray<jni::jboolean>> arrayValue;
     static TestEnv env;
 
-    env.functions->GetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray array, jsize start, jsize len, jboolean* buf)
+    env.fns->GetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray array, jsize start, jsize len, jboolean* buf)
        {
         assert(array == jni::Unwrap(arrayValue.Ptr()));
         assert(start == 0);
@@ -178,7 +178,7 @@ static void TestArrayRegion()
         *buf = jni::jni_true;
        };
 
-    env.functions->SetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray array, jsize start, jsize len, const jboolean* buf)
+    env.fns->SetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray array, jsize start, jsize len, const jboolean* buf)
        {
         assert(array == jni::Unwrap(arrayValue.Ptr()));
         assert(start == 0);

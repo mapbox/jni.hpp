@@ -64,7 +64,7 @@ int main()
     static Testable<jni::jobject> objectValue;
     static Testable<jni::jstring> stringValue;
 
-    env.functions->FindClass = [] (JNIEnv*, const char* name) -> jclass
+    env.fns->FindClass = [] (JNIEnv*, const char* name) -> jclass
        {
         assert(name == Test::Name());
         return Unwrap(classValue.Ptr());
@@ -77,33 +77,33 @@ int main()
     static bool calledNewWeakGlobalRef = false;
     static bool calledNewLocalRef = false;
 
-    env.functions->NewGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
+    env.fns->NewGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
        {
         calledNewGlobalRef = true;
         return obj;
        };
 
-    env.functions->DeleteGlobalRef = [] (JNIEnv*, jobject) -> void
+    env.fns->DeleteGlobalRef = [] (JNIEnv*, jobject) -> void
        {
        };
 
-    env.functions->NewWeakGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
+    env.fns->NewWeakGlobalRef = [] (JNIEnv*, jobject obj) -> jobject
        {
         calledNewWeakGlobalRef = true;
         return obj;
        };
 
-    env.functions->DeleteWeakGlobalRef = [] (JNIEnv*, jobject) -> void
+    env.fns->DeleteWeakGlobalRef = [] (JNIEnv*, jobject) -> void
        {
        };
 
-    env.functions->NewLocalRef = [] (JNIEnv*, jobject obj) -> jobject
+    env.fns->NewLocalRef = [] (JNIEnv*, jobject obj) -> jobject
        {
         calledNewLocalRef = true;
         return obj;
        };
 
-    env.functions->DeleteLocalRef = [] (JNIEnv*, jobject) -> void
+    env.fns->DeleteLocalRef = [] (JNIEnv*, jobject) -> void
        {
        };
 
@@ -135,7 +135,7 @@ int main()
     static Testable<jni::jmethodID> booleanConstructorMethodID;
     static Testable<jni::jmethodID> objectConstructorMethodID;
 
-    env.functions->GetMethodID = [] (JNIEnv*, jclass, const char* name, const char* sig) -> jmethodID
+    env.fns->GetMethodID = [] (JNIEnv*, jclass, const char* name, const char* sig) -> jmethodID
        {
         assert(name == std::string("<init>"));
 
@@ -157,7 +157,7 @@ int main()
            }
        };
 
-    env.functions->NewObjectV = [] (JNIEnv*, jclass, jmethodID methodID, va_list args) -> jobject
+    env.fns->NewObjectV = [] (JNIEnv*, jclass, jmethodID methodID, va_list args) -> jobject
        {
         if (methodID == jni::Unwrap(defaultConstructorMethodID.Ptr()))
            {
@@ -193,7 +193,7 @@ int main()
     static const char * objectFieldName = "object";
     static const char * stringFieldName = "string";
 
-    env.functions->GetStaticFieldID = [] (JNIEnv*, jclass, const char* name, const char* sig) -> jfieldID
+    env.fns->GetStaticFieldID = [] (JNIEnv*, jclass, const char* name, const char* sig) -> jfieldID
        {
         if (name == booleanFieldName)
            {
@@ -216,28 +216,28 @@ int main()
            }
        };
 
-    env.functions->GetStaticBooleanField = [] (JNIEnv*, jclass clazz, jfieldID field) -> jboolean
+    env.fns->GetStaticBooleanField = [] (JNIEnv*, jclass clazz, jfieldID field) -> jboolean
        {
         assert(clazz == jni::Unwrap(classValue.Ptr()));
         assert(field == jni::Unwrap(booleanFieldID.Ptr()));
         return JNI_TRUE;
        };
 
-    env.functions->GetStaticObjectField = [] (JNIEnv*, jclass clazz, jfieldID field) -> jobject
+    env.fns->GetStaticObjectField = [] (JNIEnv*, jclass clazz, jfieldID field) -> jobject
        {
         assert(clazz == jni::Unwrap(classValue.Ptr()));
         assert(field == jni::Unwrap(objectFieldID.Ptr()));
         return jni::Unwrap(objectValue.Ptr());
        };
 
-    env.functions->SetStaticBooleanField = [] (JNIEnv*, jclass clazz, jfieldID field, jboolean value)
+    env.fns->SetStaticBooleanField = [] (JNIEnv*, jclass clazz, jfieldID field, jboolean value)
        {
         assert(clazz == jni::Unwrap(classValue.Ptr()));
         assert(field == jni::Unwrap(booleanFieldID.Ptr()));
         assert(value == JNI_FALSE);
        };
 
-    env.functions->SetStaticObjectField = [] (JNIEnv*, jclass clazz, jfieldID field, jobject value)
+    env.fns->SetStaticObjectField = [] (JNIEnv*, jclass clazz, jfieldID field, jobject value)
        {
         assert(clazz == jni::Unwrap(classValue.Ptr()));
         assert(field == jni::Unwrap(objectFieldID.Ptr()));
@@ -255,16 +255,16 @@ int main()
 
     /// Field
 
-    env.functions->GetFieldID = env.functions->GetStaticFieldID; // Reuse from above
+    env.fns->GetFieldID = env.fns->GetStaticFieldID; // Reuse from above
 
-    env.functions->GetBooleanField = [] (JNIEnv*, jobject obj, jfieldID field) -> jboolean
+    env.fns->GetBooleanField = [] (JNIEnv*, jobject obj, jfieldID field) -> jboolean
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
         assert(field == jni::Unwrap(booleanFieldID.Ptr()));
         return JNI_TRUE;
        };
 
-    env.functions->GetObjectField = [] (JNIEnv*, jobject obj, jfieldID field) -> jobject
+    env.fns->GetObjectField = [] (JNIEnv*, jobject obj, jfieldID field) -> jobject
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
         if (field == jni::Unwrap(objectFieldID.Ptr()))
@@ -281,14 +281,14 @@ int main()
            }
        };
 
-    env.functions->SetBooleanField = [] (JNIEnv*, jobject obj, jfieldID field, jboolean value)
+    env.fns->SetBooleanField = [] (JNIEnv*, jobject obj, jfieldID field, jboolean value)
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
         assert(field == jni::Unwrap(booleanFieldID.Ptr()));
         assert(value == JNI_FALSE);
        };
 
-    env.functions->SetObjectField = [] (JNIEnv*, jobject obj, jfieldID field, jobject value)
+    env.fns->SetObjectField = [] (JNIEnv*, jobject obj, jfieldID field, jobject value)
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
         if (field == jni::Unwrap(objectFieldID.Ptr()))
@@ -333,7 +333,7 @@ int main()
     static const char * booleanMethodName = "returnBoolean";
     static const char * objectMethodName = "returnObject";
 
-    env.functions->GetStaticMethodID = [] (JNIEnv*, jclass, const char* name, const char* sig) -> jmethodID
+    env.fns->GetStaticMethodID = [] (JNIEnv*, jclass, const char* name, const char* sig) -> jmethodID
        {
         if (sig == std::string("()V"))
            {
@@ -386,7 +386,7 @@ int main()
            }
        };
 
-    env.functions->CallStaticVoidMethodV = [] (JNIEnv*, jclass clazz, jmethodID methodID, va_list args) -> void
+    env.fns->CallStaticVoidMethodV = [] (JNIEnv*, jclass clazz, jmethodID methodID, va_list args) -> void
        {
         assert(clazz == jni::Unwrap(classValue.Ptr()));
 
@@ -417,7 +417,7 @@ int main()
     testClass.Call(env, voidBooleanStaticMethod, jni::jni_true);
     testClass.Call(env, voidObjectStaticMethod, object);
 
-    env.functions->CallStaticBooleanMethodV = [] (JNIEnv*, jclass clazz, jmethodID methodID, va_list args) -> jboolean
+    env.fns->CallStaticBooleanMethodV = [] (JNIEnv*, jclass clazz, jmethodID methodID, va_list args) -> jboolean
        {
         assert(clazz == jni::Unwrap(classValue.Ptr()));
 
@@ -449,7 +449,7 @@ int main()
     assert(testClass.Call(env, booleanBooleanStaticMethod, jni::jni_true) == jni::jni_true);
     assert(testClass.Call(env, booleanObjectStaticMethod, object) == jni::jni_true);
 
-    env.functions->CallStaticObjectMethodV = [] (JNIEnv*, jclass clazz, jmethodID methodID, va_list args) -> jobject
+    env.fns->CallStaticObjectMethodV = [] (JNIEnv*, jclass clazz, jmethodID methodID, va_list args) -> jobject
        {
         assert(clazz == jni::Unwrap(classValue.Ptr()));
 
@@ -484,9 +484,9 @@ int main()
 
     /// Method
 
-    env.functions->GetMethodID = env.functions->GetStaticMethodID; // Reuse from above
+    env.fns->GetMethodID = env.fns->GetStaticMethodID; // Reuse from above
 
-    env.functions->CallVoidMethodV = [] (JNIEnv*, jobject obj, jmethodID methodID, va_list args) -> void
+    env.fns->CallVoidMethodV = [] (JNIEnv*, jobject obj, jmethodID methodID, va_list args) -> void
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
 
@@ -517,7 +517,7 @@ int main()
     object.Call(env, voidBooleanMethod, jni::jni_true);
     object.Call(env, voidObjectMethod, object);
 
-    env.functions->CallBooleanMethodV = [] (JNIEnv*, jobject obj, jmethodID methodID, va_list args) -> jboolean
+    env.fns->CallBooleanMethodV = [] (JNIEnv*, jobject obj, jmethodID methodID, va_list args) -> jboolean
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
 
@@ -549,7 +549,7 @@ int main()
     assert(object.Call(env, booleanBooleanMethod, jni::jni_true) == jni::jni_true);
     assert(object.Call(env, booleanObjectMethod, object) == jni::jni_true);
 
-    env.functions->CallObjectMethodV = [] (JNIEnv*, jobject obj, jmethodID methodID, va_list args) -> jobject
+    env.fns->CallObjectMethodV = [] (JNIEnv*, jobject obj, jmethodID methodID, va_list args) -> jobject
        {
         assert(obj == jni::Unwrap(objectValue.Ptr()));
 
@@ -586,13 +586,13 @@ int main()
 
     static Testable<jni::jarray<jni::jboolean>> booleanArrayValue;
 
-    env.functions->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
+    env.fns->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
        {
         assert(array == jni::Unwrap(booleanArrayValue.Ptr()));
         return 42;
        };
 
-    env.functions->GetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray, jsize, jsize, jboolean* buf)
+    env.fns->GetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray, jsize, jsize, jboolean* buf)
        {
         *buf = jni::jni_true;
        };
@@ -603,13 +603,13 @@ int main()
 
     static Testable<jni::jarray<jni::jbyte>> byteArrayValue;
 
-    env.functions->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
+    env.fns->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
        {
         assert(array == jni::Unwrap(byteArrayValue.Ptr()));
         return 42;
        };
 
-    env.functions->GetByteArrayRegion = [] (JNIEnv*, jbyteArray, jsize, jsize, jbyte* buf)
+    env.fns->GetByteArrayRegion = [] (JNIEnv*, jbyteArray, jsize, jsize, jbyte* buf)
        {
         *buf = 's';
        };
@@ -623,13 +623,13 @@ int main()
 
     static Testable<jni::jarray<jni::jobject>> objectArrayValue;
 
-    env.functions->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
+    env.fns->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
        {
         assert(array == jni::Unwrap(objectArrayValue.Ptr()));
         return 42;
        };
 
-    env.functions->GetObjectArrayElement = [] (JNIEnv*, jobjectArray, jsize) -> jobject
+    env.fns->GetObjectArrayElement = [] (JNIEnv*, jobjectArray, jsize) -> jobject
        {
         return jni::Unwrap(objectValue.Ptr());
        };
@@ -682,13 +682,13 @@ int main()
         static const char* lastExceptionMessage = nullptr;
         static Testable<jni::jclass> errorClassValue;
 
-        env.functions->FindClass = [] (JNIEnv*, const char* name) -> jclass
+        env.fns->FindClass = [] (JNIEnv*, const char* name) -> jclass
            {
             assert(name == std::string("java/lang/Error"));
             return Unwrap(errorClassValue.Ptr());
            };
 
-        env.functions->ThrowNew = [] (JNIEnv*, ::jclass clazz, const char* message) -> jint
+        env.fns->ThrowNew = [] (JNIEnv*, ::jclass clazz, const char* message) -> jint
            {
             assert(clazz == Unwrap(errorClassValue.Ptr()));
             lastExceptionMessage = message;
@@ -717,18 +717,18 @@ int main()
 
     /// Make
 
-    env.functions->NewString = [] (JNIEnv*, const jchar*, jsize) -> jstring
+    env.fns->NewString = [] (JNIEnv*, const jchar*, jsize) -> jstring
        {
         return jni::Unwrap(stringValue.Ptr());
        };
 
-    env.functions->GetStringLength = [] (JNIEnv*, jstring str) -> jsize
+    env.fns->GetStringLength = [] (JNIEnv*, jstring str) -> jsize
        {
         assert(str == jni::Unwrap(stringValue.Ptr()));
         return 5;
        };
 
-    env.functions->GetStringRegion = [] (JNIEnv*, jstring str, jsize start, jsize len, jchar* buf)
+    env.fns->GetStringRegion = [] (JNIEnv*, jstring str, jsize start, jsize len, jchar* buf)
        {
         assert(str == jni::Unwrap(stringValue.Ptr()));
         assert(start == 0);
@@ -740,18 +740,18 @@ int main()
     assert(jni::Make<std::u16string>(env, jni::Make<jni::String>(env, u"hello")) == u"hello");
 
 
-    env.functions->NewBooleanArray = [] (JNIEnv*, jsize) -> jbooleanArray
+    env.fns->NewBooleanArray = [] (JNIEnv*, jsize) -> jbooleanArray
        {
         return jni::Unwrap(booleanArrayValue.Ptr());
        };
 
-    env.functions->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
+    env.fns->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
        {
         assert(array == jni::Unwrap(booleanArrayValue.Ptr()));
         return 1;
        };
 
-    env.functions->GetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray array, jsize start, jsize len, jboolean* buf)
+    env.fns->GetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray array, jsize start, jsize len, jboolean* buf)
        {
         assert(array == jni::Unwrap(booleanArrayValue.Ptr()));
         assert(start == 0);
@@ -759,7 +759,7 @@ int main()
         *buf = jni::jni_true;
        };
 
-    env.functions->SetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray array, jsize start, jsize len, const jboolean* buf)
+    env.fns->SetBooleanArrayRegion = [] (JNIEnv*, jbooleanArray array, jsize start, jsize len, const jboolean* buf)
        {
         assert(array == jni::Unwrap(booleanArrayValue.Ptr()));
         assert(start == 0);
@@ -771,18 +771,18 @@ int main()
     assert(jni::Make<std::vector<jboolean>>(env, jni::Make<jni::Array<jni::jboolean>>(env, vec)) == vec);
 
 
-    env.functions->NewByteArray = [] (JNIEnv*, jsize) -> jbyteArray
+    env.fns->NewByteArray = [] (JNIEnv*, jsize) -> jbyteArray
        {
         return jni::Unwrap(byteArrayValue.Ptr());
        };
 
-    env.functions->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
+    env.fns->GetArrayLength = [] (JNIEnv*, jarray array) -> jsize
        {
         assert(array == jni::Unwrap(byteArrayValue.Ptr()));
         return 1;
        };
 
-    env.functions->GetByteArrayRegion = [] (JNIEnv*, jbyteArray array, jsize start, jsize len, jbyte* buf)
+    env.fns->GetByteArrayRegion = [] (JNIEnv*, jbyteArray array, jsize start, jsize len, jbyte* buf)
        {
         assert(array == jni::Unwrap(byteArrayValue.Ptr()));
         assert(start == 0);
@@ -790,7 +790,7 @@ int main()
         *buf = 's';
        };
 
-    env.functions->SetByteArrayRegion = [] (JNIEnv*, jbyteArray array, jsize start, jsize len, const jbyte* buf)
+    env.fns->SetByteArrayRegion = [] (JNIEnv*, jbyteArray array, jsize start, jsize len, const jbyte* buf)
        {
         assert(array == jni::Unwrap(byteArrayValue.Ptr()));
         assert(start == 0);
@@ -812,7 +812,7 @@ int main()
 
     static Peer peerInstance;
 
-    env.functions->GetFieldID = [] (JNIEnv*, jclass clazz, const char* name, const char* sig) -> jfieldID
+    env.fns->GetFieldID = [] (JNIEnv*, jclass clazz, const char* name, const char* sig) -> jfieldID
        {
         assert(clazz = jni::Unwrap(classValue.Ptr()));
         assert(name == std::string("peer"));
@@ -820,14 +820,14 @@ int main()
         return jni::Unwrap(objectFieldID.Ptr());
        };
 
-    env.functions->GetLongField = [] (JNIEnv*, jobject obj, jfieldID fieldID) -> jlong
+    env.fns->GetLongField = [] (JNIEnv*, jobject obj, jfieldID fieldID) -> jlong
        {
         assert(obj = jni::Unwrap(objectValue.Ptr()));
         assert(fieldID = jni::Unwrap(objectFieldID.Ptr()));
         return reinterpret_cast<jlong>(&peerInstance);
        };
 
-    env.functions->RegisterNatives = [] (JNIEnv*, jclass, const JNINativeMethod* m, jint len) -> jint
+    env.fns->RegisterNatives = [] (JNIEnv*, jclass, const JNINativeMethod* m, jint len) -> jint
        {
         assert(len <= 6);
         std::copy(m, m + len, methods);
