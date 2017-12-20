@@ -168,5 +168,5 @@ namespace jni
     UniqueClass<TagType> Seize(JNIEnv& env, Class<TagType>&& clazz)
        {
         return UniqueClass<TagType>(PointerToValue<Class<TagType>>(std::move(clazz)), ClassDeleter<TagType>(env));
-       };
+       }
    }

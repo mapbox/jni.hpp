@@ -161,7 +161,7 @@ namespace jni
     UniqueArray<E> Seize(JNIEnv& env, Array<E>&& array)
        {
         return UniqueArray<E>(PointerToValue<Array<E>>(std::move(array)), ArrayDeleter<E>(env));
-       };
+       }
 
 
     template < class T >
