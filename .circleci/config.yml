@@ -1,0 +1,114 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: mbgl/jnihpp:df002510f3-linux
+    working_directory: /src
+    steps:
+      - checkout
+
+      # Note: jni.hpp does not work with GCC 5 and earlier due to compiler bugs.
+
+      - run:
+          name: Test GCC 6 with Android JNI
+          when: always
+          environment:
+            CXX: g++-6
+            CC: gcc-6
+            VARIANT: android
+          command: make clean ; make test examples
+      - run:
+          name: Test GCC 6 with OpenJDK JNI
+          when: always
+          environment:
+            CXX: g++-6
+            CC: gcc-6
+            VARIANT: openjdk
+          command: make clean ; make test examples
+
+      - run:
+          name: Test GCC 7 with Android JNI
+          when: always
+          environment:
+            CXX: g++-7
+            CC: gcc-7
+            VARIANT: android
+          command: make clean ; make test examples
+      - run:
+          name: Test GCC 7 with OpenJDK JNI
+          when: always
+          environment:
+            CXX: g++-7
+            CC: gcc-7
+            VARIANT: openjdk
+          command: make clean ; make test examples
+
+
+      - run:
+          name: Test Clang 3.8 with Android JNI
+          when: always
+          environment:
+            CXX: clang++-3.8
+            CC: clang-3.8
+            VARIANT: android
+          command: make clean ; make test examples
+      - run:
+          name: Test Clang 3.8 with OpenJDK JNI
+          when: always
+          environment:
+            CXX: clang++-3.8
+            CC: clang-3.8
+            VARIANT: openjdk
+          command: make clean ; make test examples
+
+      - run:
+          name: Test Clang 3.9 with Android JNI
+          when: always
+          environment:
+            CXX: clang++-3.9
+            CC: clang-3.9
+            VARIANT: android
+          command: make clean ; make test examples
+      - run:
+          name: Test Clang 3.9 with OpenJDK JNI
+          when: always
+          environment:
+            CXX: clang++-3.9
+            CC: clang-3.9
+            VARIANT: openjdk
+          command: make clean ; make test examples
+
+      - run:
+          name: Test Clang 4.0 with Android JNI
+          when: always
+          environment:
+            CXX: clang++-4.0
+            CC: clang-4.0
+            VARIANT: android
+          command: make clean ; make test examples
+      - run:
+          name: Test Clang 4.0 with OpenJDK JNI
+          when: always
+          environment:
+            CXX: clang++-4.0
+            CC: clang-4.0
+            VARIANT: openjdk
+          command: make clean ; make test examples
+
+      - run:
+          name: Test Clang 5.0 with Android JNI
+          when: always
+          environment:
+            CXX: clang++-5.0
+            CC: clang-5.0
+            VARIANT: android
+          command: make clean ; make test examples
+      - run:
+          name: Test Clang 5.0 with OpenJDK JNI
+          when: always
+          environment:
+            CXX: clang++-5.0
+            CC: clang-5.0
+            VARIANT: openjdk
+          command: make clean ; make test examples

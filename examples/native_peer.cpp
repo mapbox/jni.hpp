@@ -9,6 +9,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*)
         static constexpr auto Name() { return "Calculator"; }
 
         Calculator(JNIEnv&) { std::cout << "Native peer initialized" << std::endl; }
+        Calculator(const Calculator&) = delete; // noncopyable
         ~Calculator() { std::cout << "Native peer finalized" << std::endl; }
 
         jni::jlong Add(jni::JNIEnv&, jni::jlong a, jni::jlong b) { return a + b; }
