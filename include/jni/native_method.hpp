@@ -45,7 +45,7 @@ namespace jni
 
     template < class M >
     auto MakeNativeMethod(const char* name, const char* sig, const M& m,
-                          std::enable_if_t< std::is_class<M>::value >* = 0)
+                          std::enable_if_t< std::is_class<M>::value >* = nullptr)
        {
         using FunctionType = typename NativeMethodTraits<M>::Type;
         using ResultType = typename NativeMethodTraits<M>::ResultType;
@@ -178,7 +178,7 @@ namespace jni
 
     template < class L >
     auto MakeNativePeerMethod(const char* name, const L& lambda,
-                              std::enable_if_t< std::is_class<L>::value >* = 0)
+                              std::enable_if_t< std::is_class<L>::value >* = nullptr)
        {
         return NativePeerLambdaMethod<L, decltype(&L::operator())>(name, lambda);
        }
@@ -214,7 +214,7 @@ namespace jni
 
     template < class M, M method >
     auto MakeNativePeerMethod(const char* name,
-                              std::enable_if_t< !std::is_member_function_pointer<M>::value >* = 0)
+                              std::enable_if_t< !std::is_member_function_pointer<M>::value >* = nullptr)
        {
         using FunctionType = typename NativeMethodTraits<M>::Type;
         return NativePeerFunctionPointerMethod<FunctionType, method>(name);
@@ -251,7 +251,7 @@ namespace jni
 
     template < class M, M method >
     auto MakeNativePeerMethod(const char* name,
-                              std::enable_if_t< std::is_member_function_pointer<M>::value >* = 0)
+                              std::enable_if_t< std::is_member_function_pointer<M>::value >* = nullptr)
        {
         return NativePeerMemberFunctionMethod<M, method>(name);
        }
