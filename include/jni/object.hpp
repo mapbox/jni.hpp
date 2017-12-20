@@ -61,7 +61,7 @@ namespace jni
                {}
 
             template < class Tag >
-            Object(const Object<Tag>& o, std::enable_if_t< std::is_convertible<Tag, TagType>::value >* = 0)
+            Object(const Object<Tag>& o, std::enable_if_t< std::is_convertible<Tag, TagType>::value >* = nullptr)
                : obj(o.Get())
                {}
 
