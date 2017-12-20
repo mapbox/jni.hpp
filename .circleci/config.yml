@@ -1,0 +1,38 @@
+version: 2
+
+workflows:
+  version: 2
+  default:
+    jobs:
+      - start:
+          type: approval
+      - linux:
+          requires:
+            - start
+
+defaults: &defaults
+  working_directory: /app
+  docker:
+    - image: docker:17.10.0-ce-git
+  steps:
+    - checkout
+    - setup_remote_docker:
+        version: 17.10.0-ce # Some older versions don't support ARG before FROM in Dockerfiles
+    - run:
+        name: Log in to Docker Hub
+        command: docker login -u mbgl -p ${DOCKER_PASS}
+    - run:
+        name: Revision ID
+        command: echo "Building revision ${CIRCLE_SHA1:0:10}"
+    - run:
+        name: Build image
+        command: docker build -t mbgl/jnihpp:${CIRCLE_SHA1:0:10}-${CIRCLE_STAGE} --build-arg REV=${CIRCLE_SHA1:0:10} ${CIRCLE_STAGE}
+        no_output_timeout: 30m
+    - run:
+        name: Push image
+        command: docker push mbgl/jnihpp:${CIRCLE_SHA1:0:10}-${CIRCLE_STAGE}
+
+
+jobs:
+  linux:
+    <<: *defaults
