@@ -79,17 +79,19 @@ namespace jni
         R (*fnPtr)(JNIEnv*, jobject*, Args...);
        };
 
-    enum class version : jint {};
+    enum version : jint
+       {
+        jni_version_1_1 = version(JNI_VERSION_1_1),
+        jni_version_1_2 = version(JNI_VERSION_1_2),
+        jni_version_1_4 = version(JNI_VERSION_1_4),
+        jni_version_1_6 = version(JNI_VERSION_1_6),
+       };
 
-    const version jni_version_1_1 = version(JNI_VERSION_1_1);
-    const version jni_version_1_2 = version(JNI_VERSION_1_2);
-    const version jni_version_1_4 = version(JNI_VERSION_1_4);
-    const version jni_version_1_6 = version(JNI_VERSION_1_6);
-
-    enum class error : jint {};
-
-    const error jni_ok        = error(JNI_OK);
-    const error jni_err       = error(JNI_ERR);
-    const error jni_edetached = error(JNI_EDETACHED);
-    const error jni_eversion  = error(JNI_EVERSION);
+    enum error : jint
+       {
+        jni_ok        = error(JNI_OK),
+        jni_err       = error(JNI_ERR),
+        jni_edetached = error(JNI_EDETACHED),
+        jni_eversion  = error(JNI_EVERSION),
+       };
    }
