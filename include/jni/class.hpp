@@ -50,7 +50,7 @@ namespace jni
             template < class... Args >
             Object<TagType> New(JNIEnv& env, const Constructor<TagType, Args...>& method, const Args&... args) const
                {
-                return Object<TagType>(&NewObject(env, *clazz, method, Untag(args)...));
+                return Object<TagType>(&NewObject(env, *clazz, method, RemoveTag(args)...));
                }
 
             template < class T >
@@ -85,20 +85,20 @@ namespace jni
             auto Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
-                return CallStaticMethod<R>(env, *clazz, method, Untag(args)...);
+                return CallStaticMethod<R>(env, *clazz, method, RemoveTag(args)...);
                }
 
             template < class R, class... Args >
             auto Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< !IsPrimitive<R>::value && !std::is_void<R>::value, R >
                {
-                return R(reinterpret_cast<UntaggedType<R>>(CallStaticMethod<jobject*>(env, *clazz, method, Untag(args)...)));
+                return R(reinterpret_cast<UntaggedType<R>>(CallStaticMethod<jobject*>(env, *clazz, method, RemoveTag(args)...)));
                }
 
             template < class... Args >
             void Call(JNIEnv& env, const StaticMethod<TagType, void (Args...)>& method, const Args&... args) const
                {
-                CallStaticMethod<void>(env, *clazz, method, Untag(args)...);
+                CallStaticMethod<void>(env, *clazz, method, RemoveTag(args)...);
                }
 
             static Class Find(JNIEnv& env)

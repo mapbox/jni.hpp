@@ -106,40 +106,40 @@ namespace jni
             auto Call(JNIEnv& env, const Method<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
-                return CallMethod<R>(env, obj, method, Untag(args)...);
+                return CallMethod<R>(env, obj, method, RemoveTag(args)...);
                }
 
             template < class R, class... Args >
             auto Call(JNIEnv& env, const Method<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< !IsPrimitive<R>::value && !std::is_void<R>::value, R >
                {
-                return R(reinterpret_cast<UntaggedType<R>>(CallMethod<jobject*>(env, obj, method, Untag(args)...)));
+                return R(reinterpret_cast<UntaggedType<R>>(CallMethod<jobject*>(env, obj, method, RemoveTag(args)...)));
                }
 
             template < class... Args >
             void Call(JNIEnv& env, const Method<TagType, void (Args...)>& method, const Args&... args) const
                {
-                CallMethod<void>(env, obj, method, Untag(args)...);
+                CallMethod<void>(env, obj, method, RemoveTag(args)...);
                }
 
             template < class R, class... Args >
             auto CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< IsPrimitive<R>::value, R >
                {
-                return CallNonvirtualMethod<R>(env, obj, clazz, method, Untag(args)...);
+                return CallNonvirtualMethod<R>(env, obj, clazz, method, RemoveTag(args)...);
                }
 
             template < class R, class... Args >
             auto CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, R (Args...)>& method, const Args&... args) const
                -> std::enable_if_t< !IsPrimitive<R>::value, R >
                {
-                return R(reinterpret_cast<UntaggedType<R>>(CallNonvirtualMethod<jobject*>(env, obj, clazz, method, Untag(args)...)));
+                return R(reinterpret_cast<UntaggedType<R>>(CallNonvirtualMethod<jobject*>(env, obj, clazz, method, RemoveTag(args)...)));
                }
 
             template < class... Args >
             void CallNonvirtual(JNIEnv& env, const Class<TagType>& clazz, const Method<TagType, void (Args...)>& method, const Args&... args) const
                {
-                CallNonvirtualMethod<void>(env, obj, clazz, method, Untag(args)...);
+                CallNonvirtualMethod<void>(env, obj, clazz, method, RemoveTag(args)...);
                }
 
             UniqueObject<TagType> NewGlobalRef(JNIEnv& env) const

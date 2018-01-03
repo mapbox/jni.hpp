@@ -109,7 +109,7 @@ namespace jni
 
             auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args) -> UntaggedType<R>
                {
-                return method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
+                return method(*env, AddTag<Subject>(*subject), AddTag<Args>(args)...);
                };
 
             return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
@@ -132,7 +132,7 @@ namespace jni
            {
             auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args) -> UntaggedType<R>
                {
-                return method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
+                return method(*env, AddTag<Subject>(*subject), AddTag<Args>(args)...);
                };
 
             return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
