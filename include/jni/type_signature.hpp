@@ -9,7 +9,7 @@
 
 namespace jni
    {
-    template < class > struct TypeSignature;
+    template < class, class = void > struct TypeSignature;
 
     template <> struct TypeSignature< jboolean > { const char * operator()() const { return "Z"; } };
     template <> struct TypeSignature< jbyte    > { const char * operator()() const { return "B"; } };
