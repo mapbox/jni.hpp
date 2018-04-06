@@ -5,10 +5,11 @@
 #include <jni/tagging.hpp>
 #include <jni/make.hpp>
 #include <jni/pointer_to_value.hpp>
+#include <jni/type_signature.hpp>
 
 namespace jni
    {
-    template < class E, class Enable = void >
+    template < class E, class Enable >
     class Array;
 
     template < class TagType >
@@ -106,6 +107,11 @@ namespace jni
 
             friend bool operator==( const Array& a, const Array& b )  { return a.Get() == b.Get(); }
             friend bool operator!=( const Array& a, const Array& b )  { return !( a == b ); }
+
+            static const char* Name()
+               {
+                return TypeSignature<Array<Object<TheTag>>>()();
+               }
 
             jsize Length(JNIEnv& env) const
                {
