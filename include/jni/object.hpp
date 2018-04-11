@@ -2,7 +2,7 @@
 
 #include <jni/functions.hpp>
 #include <jni/tagging.hpp>
-#include <jni/pointer_to_value.hpp>
+#include <jni/unique_pointerlike.hpp>
 
 #include <cstddef>
 
@@ -20,23 +20,14 @@ namespace jni
     template < class TheTag >
     class Object;
 
-    template < class TagType >
-    class ObjectDeleter;
+    template < class TagType = ObjectTag >
+    using UniqueObject = UniquePointerlike< Object<TagType>, GlobalRefDeleter >;
 
     template < class TagType = ObjectTag >
-    using UniqueObject = std::unique_ptr< const Object<TagType>, ObjectDeleter<TagType> >;
-
-    template < class TagType >
-    class WeakObjectRefDeleter;
+    using UniqueWeakObject = UniquePointerlike< Object<TagType>, WeakGlobalRefDeleter >;
 
     template < class TagType = ObjectTag >
-    using UniqueWeakObject = std::unique_ptr< const Object<TagType>, WeakObjectRefDeleter<TagType> >;
-
-    template < class TagType >
-    class LocalObjectRefDeleter;
-
-    template < class TagType = ObjectTag >
-    using UniqueLocalObject = std::unique_ptr< const Object<TagType>, LocalObjectRefDeleter<TagType> >;
+    using UniqueLocalObject = UniquePointerlike< Object<TagType>, LocalRefDeleter >;
 
     template < class TheTag = ObjectTag >
     class Object
@@ -165,87 +156,21 @@ namespace jni
        };
 
     template < class TagType >
-    class ObjectDeleter
-       {
-        private:
-            JNIEnv* env = nullptr;
-
-        public:
-            using pointer = PointerToValue< Object<TagType> >;
-
-            ObjectDeleter() = default;
-            ObjectDeleter(JNIEnv& e) : env(&e) {}
-
-            void operator()(pointer p) const
-               {
-                if (p)
-                   {
-                    assert(env);
-                    env->DeleteGlobalRef(Unwrap(p->Get()));
-                   }
-               }
-       };
-
-    template < class TagType >
     UniqueObject<TagType> Seize(JNIEnv& env, Object<TagType>&& object)
        {
-        return UniqueObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), ObjectDeleter<TagType>(env));
+        return UniqueObject<TagType>(std::move(object), GlobalRefDeleter(env));
        }
-
-    template < class TagType >
-    class WeakObjectRefDeleter
-       {
-        private:
-            JNIEnv* env = nullptr;
-
-        public:
-            using pointer = PointerToValue< Object<TagType> >;
-
-            WeakObjectRefDeleter() = default;
-            WeakObjectRefDeleter(JNIEnv& e) : env(&e) {}
-
-            void operator()(pointer p) const
-               {
-                if (p)
-                   {
-                    assert(env);
-                    env->DeleteWeakGlobalRef(Unwrap(p->Get()));
-                   }
-               }
-       };
 
     template < class TagType >
     UniqueWeakObject<TagType> SeizeWeakRef(JNIEnv& env, Object<TagType>&& object)
        {
-        return UniqueWeakObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), WeakObjectRefDeleter<TagType>(env));
+        return UniqueWeakObject<TagType>(std::move(object), WeakGlobalRefDeleter(env));
        }
-
-    template < class TagType >
-    class LocalObjectRefDeleter
-       {
-        private:
-            JNIEnv* env = nullptr;
-
-        public:
-            using pointer = PointerToValue< Object<TagType> >;
-
-            LocalObjectRefDeleter() = default;
-            LocalObjectRefDeleter(JNIEnv& e) : env(&e) {}
-
-            void operator()(pointer p) const
-               {
-                if (p)
-                   {
-                    assert(env);
-                    env->DeleteLocalRef(Unwrap(p->Get()));
-                   }
-               }
-       };
 
     template < class TagType >
     UniqueLocalObject<TagType> SeizeLocalRef(JNIEnv& env, Object<TagType>&& object)
        {
-        return UniqueLocalObject<TagType>(PointerToValue<Object<TagType>>(std::move(object)), LocalObjectRefDeleter<TagType>(env));
+        return UniqueLocalObject<TagType>(std::move(object), LocalRefDeleter(env));
        }
 
 

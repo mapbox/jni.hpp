@@ -4,18 +4,21 @@
 #include <jni/object.hpp>
 #include <jni/tagging.hpp>
 #include <jni/make.hpp>
-#include <jni/pointer_to_value.hpp>
+#include <jni/unique_pointerlike.hpp>
 
 namespace jni
    {
     template < class E, class Enable = void >
     class Array;
 
-    template < class TagType >
-    class ArrayDeleter;
+    template < class E >
+    using UniqueArray = UniquePointerlike< Array<E>, GlobalRefDeleter >;
 
     template < class E >
-    using UniqueArray = std::unique_ptr< const Array<E>, ArrayDeleter<E> >;
+    using UniqueWeakArray = UniquePointerlike< Array<E>, WeakGlobalRefDeleter >;
+
+    template < class E >
+    using UniqueLocalArray = UniquePointerlike< Array<E>, LocalRefDeleter >;
 
     template < class E >
     class Array< E, std::enable_if_t<IsPrimitive<E>::value> >
@@ -28,8 +31,15 @@ namespace jni
             UntaggedType* array = nullptr;
 
         public:
+            explicit Array(std::nullptr_t = nullptr)
+               {}
+
             explicit Array(UntaggedType* a)
                : array(a)
+               {}
+
+            explicit Array(UntaggedType& a)
+               : array(&a)
                {}
 
             explicit operator bool() const { return array; }
@@ -94,8 +104,15 @@ namespace jni
             UntaggedType* array = nullptr;
 
         public:
+            explicit Array(std::nullptr_t = nullptr)
+               {}
+
             explicit Array(UntaggedType* a)
                : array(a)
+               {}
+
+            explicit Array(UntaggedType& a)
+               : array(&a)
                {}
 
             explicit operator bool() const { return array; }
@@ -136,31 +153,21 @@ namespace jni
       };
 
     template < class E >
-    class ArrayDeleter
-       {
-        private:
-            JNIEnv* env = nullptr;
-
-        public:
-            using pointer = PointerToValue< Array<E> >;
-
-            ArrayDeleter() = default;
-            ArrayDeleter(JNIEnv& e) : env(&e) {}
-
-            void operator()(pointer p) const
-               {
-                if (p)
-                   {
-                    assert(env);
-                    env->DeleteGlobalRef(Unwrap(p->Get()));
-                   }
-               }
-       };
-
-    template < class E >
     UniqueArray<E> Seize(JNIEnv& env, Array<E>&& array)
        {
-        return UniqueArray<E>(PointerToValue<Array<E>>(std::move(array)), ArrayDeleter<E>(env));
+        return UniqueArray<E>(std::move(array), GlobalRefDeleter(env));
+       }
+
+    template < class E >
+    UniqueWeakArray<E> SeizeWeakRef(JNIEnv& env, Array<E>&& array)
+       {
+        return UniqueWeakArray<E>(std::move(array), WeakGlobalRefDeleter(env));
+       }
+
+    template < class E >
+    UniqueLocalArray<E> SeizeLocalRef(JNIEnv& env, Array<E>&& array)
+       {
+        return UniqueLocalArray<E>(std::move(array), LocalRefDeleter(env));
        }
 
 

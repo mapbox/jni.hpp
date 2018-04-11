@@ -108,6 +108,37 @@ static void TestNewAndDeleteWeakGlobalRef()
        [] { jni::DeleteWeakGlobalRef(env, jni::NewWeakGlobalRef(env, failureValue.Ptr())); }));
    }
 
+static void TestNewAndDeleteLocalRef()
+   {
+    static Testable<jni::jobject> objectValue;
+    static Testable<jni::jclass> classValue;
+    static Testable<jni::jobject> failureValue;
+    static TestEnv env;
+
+    env.fns->NewLocalRef = [] (JNIEnv*, jobject obj) -> jobject
+       {
+        if (obj == Unwrap(objectValue.Ptr()))
+            return Unwrap(objectValue.Ptr());
+        if (obj == Unwrap(classValue.Ptr()))
+            return Unwrap(classValue.Ptr());
+        env.exception = true;
+        return nullptr;
+       };
+
+    env.fns->DeleteLocalRef = [] (JNIEnv*, jobject obj) -> void
+       {
+        if (obj == Unwrap(objectValue.Ptr()))
+            return;
+        env.exception = true;
+       };
+
+    assert(objectValue == *jni::NewLocalRef(env, objectValue.Ptr()));
+    assert(classValue == *jni::NewLocalRef(env, classValue.Ptr()));
+    assert(Throws<jni::PendingJavaException>([] { jni::NewLocalRef(env, failureValue.Ptr()); }));
+    assert(Throws<jni::PendingJavaException>(
+       [] { jni::DeleteLocalRef(env, jni::NewLocalRef(env, failureValue.Ptr())); }));
+   }
+
 static void TestNewObject()
    {
     static Testable<jni::jclass> classValue;
@@ -257,10 +288,9 @@ int main()
 
     TestNewAndDeleteGlobalRef();
     TestNewAndDeleteWeakGlobalRef();
+    TestNewAndDeleteLocalRef();
 
     /*
-        jobject     (*NewLocalRef)(JNIEnv*, jobject);
-        void        (*DeleteLocalRef)(JNIEnv*, jobject);
         jint        (*EnsureLocalCapacity)(JNIEnv*, jint);
         jboolean    (*IsSameObject)(JNIEnv*, jobject, jobject);
     */

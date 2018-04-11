@@ -44,8 +44,8 @@ static void RegisterHighLevel(JavaVM* vm)
 
     jni::JNIEnv& env { jni::GetEnv(*vm) };
 
-    static auto system = *jni::Class<System>::Find(env).NewGlobalRef(env).release();
-    static auto printStream = *jni::Class<PrintStream>::Find(env).NewGlobalRef(env).release();
+    static auto system = jni::Class<System>::Find(env).NewGlobalRef(env).release();
+    static auto printStream = jni::Class<PrintStream>::Find(env).NewGlobalRef(env).release();
 
     static auto out = system.GetStaticField<jni::Object<PrintStream>>(env, "out");
     static auto println = printStream.GetMethod<void (jni::String)>(env, "println");

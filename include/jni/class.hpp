@@ -2,7 +2,7 @@
 
 #include <jni/functions.hpp>
 #include <jni/tagging.hpp>
-#include <jni/pointer_to_value.hpp>
+#include <jni/unique_pointerlike.hpp>
 
 namespace jni
    {
@@ -17,10 +17,7 @@ namespace jni
     class Class;
 
     template < class TagType >
-    class ClassDeleter;
-
-    template < class TagType >
-    using UniqueClass = std::unique_ptr< const Class<TagType>, ClassDeleter<TagType> >;
+    using UniqueClass = UniquePointerlike< Class<TagType>, GlobalRefDeleter >;
 
     template < class TheTag >
     class Class
@@ -143,30 +140,8 @@ namespace jni
        };
 
     template < class TagType >
-    class ClassDeleter
-       {
-        private:
-            JNIEnv* env = nullptr;
-
-        public:
-            using pointer = PointerToValue< Class<TagType> >;
-
-            ClassDeleter() = default;
-            ClassDeleter(JNIEnv& e) : env(&e) {}
-
-            void operator()(pointer p) const
-               {
-                if (p)
-                   {
-                    assert(env);
-                    env->DeleteGlobalRef(Unwrap(p->Get()));
-                   }
-               }
-       };
-
-    template < class TagType >
     UniqueClass<TagType> Seize(JNIEnv& env, Class<TagType>&& clazz)
        {
-        return UniqueClass<TagType>(PointerToValue<Class<TagType>>(std::move(clazz)), ClassDeleter<TagType>(env));
+        return UniqueClass<TagType>(std::move(clazz), GlobalRefDeleter(env));
        }
    }
