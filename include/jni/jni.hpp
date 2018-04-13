@@ -19,3 +19,4 @@
 #include <jni/field.hpp>
 #include <jni/static_field.hpp>
 #include <jni/native_method.hpp>
+#include <jni/boxing.hpp>
