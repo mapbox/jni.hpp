@@ -108,6 +108,15 @@ namespace jni
                 return Class(FindClass(env, TagType::Name()));
                }
 
+            static const Class& Singleton(JNIEnv& env)
+               {
+                // The global references created here is purposefully leaked. Due to the design
+                // of Java/JNI, there is virtually no way to reliably release them. See
+                // http://bleaklow.com/2006/02/18/jni_onunload_mostly_useless.html for details.
+                static Class singleton = Find(env).NewGlobalRef(env).release();
+                return singleton;
+               }
+
             template < class... Args >
             Constructor<TagType, Args...> GetConstructor(JNIEnv& env) const
                {
