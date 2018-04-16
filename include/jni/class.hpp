@@ -25,6 +25,10 @@ namespace jni
         private:
             jclass* clazz = nullptr;
 
+            template < class T, class D > friend class UniquePointerlike;
+
+            void reset(jclass* c) { clazz = c; }
+
         public:
             using TagType = TheTag;
 
@@ -34,6 +38,13 @@ namespace jni
             explicit Class(jclass& c)
                : clazz(&c)
                {}
+
+            Class(const Class& c)
+               : clazz(c.clazz)
+               {}
+
+            // Not reassignable; it would break UniquePointerlike's abstraction.
+            Class& operator=(const Class&) = delete;
 
             explicit operator bool() const { return clazz; }
 

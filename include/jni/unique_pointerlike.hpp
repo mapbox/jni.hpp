@@ -56,7 +56,7 @@ namespace jni
             void reset(T&& t = T())
                {
                 T current = pointerlike;
-                pointerlike = std::move(t);
+                pointerlike.reset(t.Get());
                 if (current)
                    {
                     get_deleter()(current.Get());
@@ -66,7 +66,7 @@ namespace jni
             T release()
                {
                 T current = pointerlike;
-                pointerlike = T();
+                pointerlike.reset(nullptr);
                 return current;
                }
 

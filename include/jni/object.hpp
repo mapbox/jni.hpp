@@ -39,6 +39,10 @@ namespace jni
         private:
             UntaggedObjectType* obj = nullptr;
 
+            template < class T, class D > friend class UniquePointerlike;
+
+            void reset(UntaggedObjectType* o) { obj = o; }
+
         public:
             explicit Object(std::nullptr_t = nullptr)
                {}
@@ -51,10 +55,17 @@ namespace jni
                : obj(&o)
                {}
 
+            Object(const Object& o)
+               : obj(o.obj)
+               {}
+
             template < class Tag >
             Object(const Object<Tag>& o, std::enable_if_t< std::is_convertible<Tag, TagType>::value >* = nullptr)
                : obj(o.Get())
                {}
+
+            // Not reassignable; it would break UniquePointerlike's abstraction.
+            Object& operator=(const Object&) = delete;
 
             explicit operator bool() const { return obj; }
 

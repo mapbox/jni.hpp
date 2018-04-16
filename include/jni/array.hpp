@@ -30,6 +30,10 @@ namespace jni
         private:
             UntaggedType* array = nullptr;
 
+            template < class T, class D > friend class UniquePointerlike;
+
+            void reset(UntaggedType* a) { array = a; }
+
         public:
             explicit Array(std::nullptr_t = nullptr)
                {}
@@ -41,6 +45,13 @@ namespace jni
             explicit Array(UntaggedType& a)
                : array(&a)
                {}
+
+            Array(const Array& a)
+               : array(a.array)
+               {}
+
+            // Not reassignable; it would break UniquePointerlike's abstraction.
+            Array& operator=(const Array&) = delete;
 
             explicit operator bool() const { return array; }
 
@@ -103,6 +114,10 @@ namespace jni
         private:
             UntaggedType* array = nullptr;
 
+            template < class T, class D > friend class UniquePointerlike;
+
+            void reset(UntaggedType* a) { array = a; }
+
         public:
             explicit Array(std::nullptr_t = nullptr)
                {}
@@ -114,6 +129,13 @@ namespace jni
             explicit Array(UntaggedType& a)
                : array(&a)
                {}
+
+            Array(const Array& a)
+               : array(a.array)
+               {}
+
+            // Not reassignable; it would break UniquePointerlike's abstraction.
+            Array& operator=(const Array&) = delete;
 
             explicit operator bool() const { return array; }
 

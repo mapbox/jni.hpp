@@ -125,7 +125,6 @@ int main()
 
     jni::Object<Derived> derived;
     jni::Object<Base> base(derived);
-    base = derived;
     (void)[] () -> jni::Object<Base> { return jni::Object<Derived>(); };
     (void)[] () -> jni::Object<> { return jni::String(); };
 
