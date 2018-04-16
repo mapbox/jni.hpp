@@ -155,7 +155,7 @@ namespace jni
        };
 
     template < class OutTagType, class InTagType >
-    Object<OutTagType> Cast(JNIEnv& env, const Object<InTagType>& object, const Class<OutTagType>& clazz)
+    Object<OutTagType> Cast(JNIEnv& env, const Class<OutTagType>& clazz, const Object<InTagType>& object)
        {
         if (!object.IsInstanceOf(env, clazz))
            {
