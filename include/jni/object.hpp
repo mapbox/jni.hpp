@@ -161,6 +161,6 @@ namespace jni
            {
             ThrowNew(env, FindClass(env, "java/lang/ClassCastException"));
            }
-        return Object<OutTagType>(object.Get());
+        return Object<OutTagType>(reinterpret_cast<UntaggedType<Object<OutTagType>>>(object.Get()));
        }
    }
