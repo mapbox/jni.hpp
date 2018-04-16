@@ -17,18 +17,6 @@ namespace jni
     template < class TagType >
     struct UntaggedObjectType { using Type = jobject; };
 
-    template < class TheTag >
-    class Object;
-
-    template < class TagType = ObjectTag >
-    using UniqueObject = UniquePointerlike< Object<TagType>, GlobalRefDeleter >;
-
-    template < class TagType = ObjectTag >
-    using UniqueWeakObject = UniquePointerlike< Object<TagType>, WeakGlobalRefDeleter >;
-
-    template < class TagType = ObjectTag >
-    using UniqueLocalObject = UniquePointerlike< Object<TagType>, LocalRefDeleter >;
-
     template < class TheTag = ObjectTag >
     class Object
        {
@@ -144,19 +132,19 @@ namespace jni
                 CallNonvirtualMethod<void>(env, obj, clazz, method, Untag(args)...);
                }
 
-            UniqueObject<TagType> NewGlobalRef(JNIEnv& env) const
+            Global<Object<TagType>> NewGlobalRef(JNIEnv& env) const
                {
-                return Seize(env, Object(jni::NewGlobalRef(env, obj).release()));
+                return SeizeGlobal(env, Object(jni::NewGlobalRef(env, obj).release()));
                }
 
-            UniqueWeakObject<TagType> NewWeakGlobalRef(JNIEnv& env) const
+            Weak<Object<TagType>> NewWeakGlobalRef(JNIEnv& env) const
                {
-                return SeizeWeakRef(env, Object(jni::NewWeakGlobalRef(env, obj).release()));
+                return SeizeWeak(env, Object(jni::NewWeakGlobalRef(env, obj).release()));
                }
 
-            UniqueLocalObject<TagType> NewLocalRef(JNIEnv& env) const
+            Local<Object<TagType>> NewLocalRef(JNIEnv& env) const
                {
-                return SeizeLocalRef(env, Object(jni::NewLocalRef(env, obj).release()));
+                return SeizeLocal(env, Object(jni::NewLocalRef(env, obj).release()));
                }
 
             template < class OtherTag >
@@ -165,25 +153,6 @@ namespace jni
                 return jni::IsInstanceOf(env, obj, clazz);
                }
        };
-
-    template < class TagType >
-    UniqueObject<TagType> Seize(JNIEnv& env, Object<TagType>&& object)
-       {
-        return UniqueObject<TagType>(std::move(object), GlobalRefDeleter(env));
-       }
-
-    template < class TagType >
-    UniqueWeakObject<TagType> SeizeWeakRef(JNIEnv& env, Object<TagType>&& object)
-       {
-        return UniqueWeakObject<TagType>(std::move(object), WeakGlobalRefDeleter(env));
-       }
-
-    template < class TagType >
-    UniqueLocalObject<TagType> SeizeLocalRef(JNIEnv& env, Object<TagType>&& object)
-       {
-        return UniqueLocalObject<TagType>(std::move(object), LocalRefDeleter(env));
-       }
-
 
     template < class OutTagType, class InTagType >
     Object<OutTagType> Cast(JNIEnv& env, const Object<InTagType>& object, const Class<OutTagType>& clazz)

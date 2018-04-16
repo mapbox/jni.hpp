@@ -14,12 +14,6 @@ namespace jni
     template < class TheTag, class > class StaticMethod;
 
     template < class TheTag >
-    class Class;
-
-    template < class TagType >
-    using UniqueClass = UniquePointerlike< Class<TagType>, GlobalRefDeleter >;
-
-    template < class TheTag >
     class Class
        {
         private:
@@ -144,15 +138,9 @@ namespace jni
                 return StaticMethod<TagType, T>(env, *this, name);
                }
 
-            UniqueClass<TagType> NewGlobalRef(JNIEnv& env) const
+            Global<Class<TagType>> NewGlobalRef(JNIEnv& env) const
                {
-                return Seize(env, Class(*jni::NewGlobalRef(env, clazz).release()));
+                return SeizeGlobal(env, Class(*jni::NewGlobalRef(env, clazz).release()));
                }
        };
-
-    template < class TagType >
-    UniqueClass<TagType> Seize(JNIEnv& env, Class<TagType>&& clazz)
-       {
-        return UniqueClass<TagType>(std::move(clazz), GlobalRefDeleter(env));
-       }
    }

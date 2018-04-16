@@ -12,15 +12,6 @@ namespace jni
     class Array;
 
     template < class E >
-    using UniqueArray = UniquePointerlike< Array<E>, GlobalRefDeleter >;
-
-    template < class E >
-    using UniqueWeakArray = UniquePointerlike< Array<E>, WeakGlobalRefDeleter >;
-
-    template < class E >
-    using UniqueLocalArray = UniquePointerlike< Array<E>, LocalRefDeleter >;
-
-    template < class E >
     class Array< E, std::enable_if_t<IsPrimitive<E>::value> >
        {
         public:
@@ -96,9 +87,9 @@ namespace jni
                 return Array<E>(&NewArray<E>(env, length));
                }
 
-            UniqueArray<E> NewGlobalRef(JNIEnv& env) const
+            Global<Array<E>> NewGlobalRef(JNIEnv& env) const
                {
-                return Seize(env, Array(jni::NewGlobalRef(env, array).release()));
+                return SeizeGlobal(env, Array(jni::NewGlobalRef(env, array).release()));
                }
        };
 
@@ -168,30 +159,11 @@ namespace jni
                 return Array<Object<TheTag>>(&NewObjectArray(env, length, clazz, initialElement.Get()));
                }
 
-            UniqueArray<Object<TheTag>> NewGlobalRef(JNIEnv& env) const
+            Global<Array<Object<TheTag>>> NewGlobalRef(JNIEnv& env) const
                {
-                return Seize(env, Array(jni::NewGlobalRef(env, array).release()));
+                return SeizeGlobal(env, Array(jni::NewGlobalRef(env, array).release()));
                }
       };
-
-    template < class E >
-    UniqueArray<E> Seize(JNIEnv& env, Array<E>&& array)
-       {
-        return UniqueArray<E>(std::move(array), GlobalRefDeleter(env));
-       }
-
-    template < class E >
-    UniqueWeakArray<E> SeizeWeakRef(JNIEnv& env, Array<E>&& array)
-       {
-        return UniqueWeakArray<E>(std::move(array), WeakGlobalRefDeleter(env));
-       }
-
-    template < class E >
-    UniqueLocalArray<E> SeizeLocalRef(JNIEnv& env, Array<E>&& array)
-       {
-        return UniqueLocalArray<E>(std::move(array), LocalRefDeleter(env));
-       }
-
 
     template < class T >
     std::vector<T> MakeAnything(ThingToMake<std::vector<T>>, JNIEnv& env, const Array<T>& array)

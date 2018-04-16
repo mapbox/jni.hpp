@@ -5,10 +5,11 @@
     not D::pointer; and deletion is performed via get_deleter()(current.Get()). These are
     the semantics needed by:
 
-        * UniqueObject, a.k.a. UniquePointerlike<Object<TagType>, GlobalRefDeleter>,
-        * UniqueWeakObject, a.k.a. UniquePointerlike<Object<TagType>, WeakGlobalRefDeleter>,
-        * UniqueLocalObject, a.k.a. UniquePointerlike<Object<TagType>, LocalRefDeleter>,
-        * and similar typedefs for Array<E>.
+        * Global<P>, a.k.a. UniquePointerlike<T, GlobalRefDeleter>,
+        * Weak<P>, a.k.a. UniquePointerlike<T, WeakGlobalRefDeleter>,
+        * Local<P>, a.k.a. UniquePointerlike<T, LocalRefDeleter>,
+
+    where P is Object<>, Class<>, or Array<>.
 */
 
 namespace jni
@@ -80,4 +81,26 @@ namespace jni
                   D& get_deleter()         { return deleter; }
             const D& get_deleter() const   { return deleter; }
        };
+
+    template < class T > using Global = UniquePointerlike< T, GlobalRefDeleter >;
+    template < class T > using Weak   = UniquePointerlike< T, WeakGlobalRefDeleter >;
+    template < class T > using Local  = UniquePointerlike< T, LocalRefDeleter >;
+
+    template < class T >
+    Global<T> SeizeGlobal(JNIEnv& env, T&& t)
+       {
+        return Global<T>(std::move(t), GlobalRefDeleter(env));
+       }
+
+    template < class T >
+    Weak<T> SeizeWeak(JNIEnv& env, T&& t)
+       {
+        return Weak<T>(std::move(t), WeakGlobalRefDeleter(env));
+       }
+
+    template < class T >
+    Local<T> SeizeLocal(JNIEnv& env, T&& t)
+       {
+        return Local<T>(std::move(t), LocalRefDeleter(env));
+       }
    }
