@@ -77,6 +77,16 @@ namespace jni
        };
 
 
+    using Boolean   = Object<BooleanTag>;
+    using Byte      = Object<ByteTag>;
+    using Character = Object<CharacterTag>;
+    using Short     = Object<ShortTag>;
+    using Integer   = Object<IntegerTag>;
+    using Long      = Object<LongTag>;
+    using Float     = Object<FloatTag>;
+    using Double    = Object<DoubleTag>;
+
+
     template < class Tag, class Unboxed >
     struct PrimitiveTypeBoxer
        {
