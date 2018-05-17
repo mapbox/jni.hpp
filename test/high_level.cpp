@@ -678,7 +678,7 @@ int main()
         assert(reinterpret_cast<jobject (*)(JNIEnv*, jobject, jobject)>(objectObject.fnPtr)(&env, nullptr, nullptr) == nullptr);
 
 
-        static const char* lastExceptionMessage = nullptr;
+        static std::string lastExceptionMessage;
         static Testable<jni::jclass> errorClassValue;
 
         env.fns->FindClass = [] (JNIEnv*, const char* name) -> jclass
@@ -695,17 +695,17 @@ int main()
            };
 
         auto throwsException = jni::MakeNativeMethod("throwsException", [] (JNIEnv&, ObjectOrClass) { throw std::runtime_error("test"); });
-        lastExceptionMessage = nullptr;
+        lastExceptionMessage.clear();
         reinterpret_cast<void (*)(JNIEnv*, jobject)>(throwsException.fnPtr)(&env, nullptr);
         assert(lastExceptionMessage == std::string("test"));
 
         auto throwsUnknown = jni::MakeNativeMethod("throwsUnknown", [] (JNIEnv&, ObjectOrClass) { throw Test(); });
-        lastExceptionMessage = nullptr;
+        lastExceptionMessage.clear();
         reinterpret_cast<void (*)(JNIEnv*, jobject)>(throwsUnknown.fnPtr)(&env, nullptr);
         assert(lastExceptionMessage == std::string("unknown native exception"));
 
         auto javaException = jni::MakeNativeMethod("javaException", [] (JNIEnv&, ObjectOrClass) { jni::ThrowNew(env, jni::FindClass(env, "java/lang/Error"), "Java exception"); });
-        lastExceptionMessage = nullptr;
+        lastExceptionMessage.clear();
         reinterpret_cast<void (*)(JNIEnv*, jobject)>(javaException.fnPtr)(&env, nullptr);
         assert(lastExceptionMessage == std::string("Java exception"));
        };
