@@ -138,6 +138,16 @@ namespace jni
         return UniqueGlobalRef<T>(reinterpret_cast<T*>(obj), GlobalRefDeleter(env));
        }
 
+    // Attempt to promote a weak reference to a strong one. Returns an empty result
+    // if the weak reference has expired.
+    template < class T >
+    UniqueGlobalRef<T> NewGlobalRef(JNIEnv& env, const UniqueWeakGlobalRef<T>& t)
+       {
+        jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t)));
+        CheckJavaException(env);
+        return UniqueGlobalRef<T>(reinterpret_cast<T*>(obj), GlobalRefDeleter(env));
+       }
+
     inline void DeleteGlobalRef(JNIEnv& env, UniqueGlobalRef<jobject>&& ref)
        {
         env.DeleteGlobalRef(Unwrap(ref.release()));
@@ -152,6 +162,16 @@ namespace jni
         CheckJavaException(env);
         if (t && !obj)
             throw std::bad_alloc();
+        return UniqueLocalRef<T>(reinterpret_cast<T*>(obj), LocalRefDeleter(env));
+       }
+
+    // Attempt to promote a weak reference to a strong one. Returns an empty result
+    // if the weak reference has expired.
+    template < class T >
+    UniqueLocalRef<T> NewLocalRef(JNIEnv& env, const UniqueWeakGlobalRef<T>& t)
+       {
+        jobject* obj = Wrap<jobject*>(env.NewLocalRef(Unwrap(t)));
+        CheckJavaException(env);
         return UniqueLocalRef<T>(reinterpret_cast<T*>(obj), LocalRefDeleter(env));
        }
 

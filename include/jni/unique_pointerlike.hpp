@@ -103,4 +103,24 @@ namespace jni
        {
         return Local<T>(std::move(t), LocalRefDeleter(env));
        }
+
+    // Attempt to promote a weak reference to a strong one. Returns an empty result
+    // if the weak reference has expired.
+    template < class T >
+    Global<T> NewGlobal(JNIEnv& env, const Weak<T>& t)
+       {
+        jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t->Get())));
+        CheckJavaException(env);
+        return SeizeGlobal(env, T(obj));
+       }
+
+    // Attempt to promote a weak reference to a strong one. Returns an empty result
+    // if the weak reference has expired.
+    template < class T >
+    Local<T> NewLocal(JNIEnv& env, const Weak<T>& t)
+       {
+        jobject* obj = Wrap<jobject*>(env.NewLocalRef(Unwrap(t->Get())));
+        CheckJavaException(env);
+        return SeizeLocal(env, T(obj));
+       }
    }
