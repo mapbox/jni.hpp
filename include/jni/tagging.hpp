@@ -7,21 +7,21 @@
 namespace jni
    {
     template < class T >
-    auto Tag(T primitive)
+    auto AddTag(T primitive)
        -> std::enable_if_t< IsPrimitive<T>::value, T >
        {
         return primitive;
        }
 
     template < class T, class U >
-    auto Tag(U* u)
+    auto AddTag(U* u)
        -> std::enable_if_t< !IsPrimitive<T>::value, T >
        {
         return T(u);
        }
 
     template < class T, class U >
-    auto Tag(U& u)
+    auto AddTag(U& u)
        -> std::enable_if_t< !IsPrimitive<T>::value, T >
        {
         return T(u);
@@ -29,14 +29,14 @@ namespace jni
 
 
     template < class T >
-    auto Untag(T primitive)
+    auto RemoveTag(T primitive)
        -> std::enable_if_t< IsPrimitive<T>::value, T >
        {
         return primitive;
        }
 
     template < class T >
-    auto Untag(const T& t)
+    auto RemoveTag(const T& t)
        -> std::enable_if_t< !IsPrimitive<T>::value, decltype(t.Get()) >
        {
         return t.Get();
@@ -46,7 +46,7 @@ namespace jni
     template < class T >
     struct UntaggedTypeTraits
        {
-        using Type = decltype(Untag(std::declval<T>()));
+        using Type = decltype(RemoveTag(std::declval<T>()));
        };
 
     template <>

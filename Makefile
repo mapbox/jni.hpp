@@ -40,6 +40,11 @@ libpeer.$(dylib)_SOURCES = examples/native_peer.cpp
 CXXFLAGS__examples/native_peer.cpp = -Wno-shadow
 libpeer.$(dylib)_LDFLAGS = $(LDFLAGS_shared)
 
+TARGETS += libbinding.$(dylib)
+libbinding.$(dylib)_SOURCES = examples/binding.cpp
+CXXFLAGS__examples/binding.cpp = -Wno-shadow
+libbinding.$(dylib)_LDFLAGS = $(LDFLAGS_shared)
+
 .PHONY: all
 all: $(TARGETS)
 
@@ -49,9 +54,15 @@ test: low_level high_level
 	$(BUILD)/high_level
 
 .PHONY: examples
-examples: libhello.$(dylib) examples/Hello.class libpeer.$(dylib) examples/NativePeer.class
+examples: libhello.$(dylib) examples/Hello.class
+examples: libpeer.$(dylib) examples/NativePeer.class
+examples: libbinding.$(dylib) examples/Binding.class
 	java -Djava.library.path=$(BUILD) -Xcheck:jni -cp examples Hello $(shell whoami)
 	java -Djava.library.path=$(BUILD) -Xcheck:jni -cp examples NativePeer
+	java -Djava.library.path=$(BUILD) -Xcheck:jni -cp examples Binding
+
+example-binding: libbinding.$(dylib) examples/Binding.class
+	java -Djava.library.path=$(BUILD) -Xcheck:jni -cp examples Binding
 
 # --------------------------------------------------------------------------------------------------
 

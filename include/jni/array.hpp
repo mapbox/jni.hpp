@@ -151,7 +151,7 @@ namespace jni
 
             void Set(JNIEnv& env, jsize index, const ElementType& value)
                {
-                SetObjectArrayElement(env, SafeDereference(env, array), index, Untag(value));
+                SetObjectArrayElement(env, SafeDereference(env, array), index, RemoveTag(value));
                }
 
             static Array<Object<TheTag>> New(JNIEnv& env, jsize length, const Class<TheTag>& clazz, const Object<TheTag>& initialElement = Object<TheTag>())
