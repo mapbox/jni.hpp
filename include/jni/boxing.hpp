@@ -1,6 +1,7 @@
 #pragma once
 
 #include <jni/class.hpp>
+#include <jni/object.hpp>
 
 namespace jni
    {
@@ -20,56 +21,61 @@ namespace jni
        }
 
 
-    struct BooleanTag
+    struct BooleanTag : public ObjectTag
        {
         static constexpr auto Name() { return "java/lang/Boolean"; }
         static constexpr auto BoxStaticMethodName() { return "valueOf"; }
         static constexpr auto UnboxMethodName() { return "booleanValue"; }
        };
 
-    struct ByteTag
-       {
-        static constexpr auto Name() { return "java/lang/Byte"; }
-        static constexpr auto BoxStaticMethodName() { return "valueOf"; }
-        static constexpr auto UnboxMethodName() { return "byteValue"; }
-       };
-
-    struct CharacterTag
+    struct CharacterTag : public ObjectTag
        {
         static constexpr auto Name() { return "java/lang/Character"; }
         static constexpr auto BoxStaticMethodName() { return "valueOf"; }
         static constexpr auto UnboxMethodName() { return "charValue"; }
        };
 
-    struct ShortTag
+    struct NumberTag : public ObjectTag
+       {
+        static constexpr auto Name() { return "java/lang/Number"; }
+       };
+
+    struct ByteTag : public NumberTag
+       {
+        static constexpr auto Name() { return "java/lang/Byte"; }
+        static constexpr auto BoxStaticMethodName() { return "valueOf"; }
+        static constexpr auto UnboxMethodName() { return "byteValue"; }
+       };
+
+    struct ShortTag : public NumberTag
        {
         static constexpr auto Name() { return "java/lang/Short"; }
         static constexpr auto BoxStaticMethodName() { return "valueOf"; }
         static constexpr auto UnboxMethodName() { return "shortValue"; }
        };
 
-    struct IntegerTag
+    struct IntegerTag : public NumberTag
        {
         static constexpr auto Name() { return "java/lang/Integer"; }
         static constexpr auto BoxStaticMethodName() { return "valueOf"; }
         static constexpr auto UnboxMethodName() { return "intValue"; }
        };
 
-    struct LongTag
+    struct LongTag : public NumberTag
        {
         static constexpr auto Name() { return "java/lang/Long"; }
         static constexpr auto BoxStaticMethodName() { return "valueOf"; }
         static constexpr auto UnboxMethodName() { return "longValue"; }
        };
 
-    struct FloatTag
+    struct FloatTag : public NumberTag
        {
         static constexpr auto Name() { return "java/lang/Float"; }
         static constexpr auto BoxStaticMethodName() { return "valueOf"; }
         static constexpr auto UnboxMethodName() { return "floatValue"; }
        };
 
-    struct DoubleTag
+    struct DoubleTag : public NumberTag
        {
         static constexpr auto Name() { return "java/lang/Double"; }
         static constexpr auto BoxStaticMethodName() { return "valueOf"; }
@@ -78,8 +84,9 @@ namespace jni
 
 
     using Boolean   = Object<BooleanTag>;
-    using Byte      = Object<ByteTag>;
     using Character = Object<CharacterTag>;
+    using Number    = Object<NumberTag>;
+    using Byte      = Object<ByteTag>;
     using Short     = Object<ShortTag>;
     using Integer   = Object<IntegerTag>;
     using Long      = Object<LongTag>;
