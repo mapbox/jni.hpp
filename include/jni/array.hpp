@@ -154,9 +154,9 @@ namespace jni
                 SetObjectArrayElement(env, SafeDereference(env, array), index, Untag(value));
                }
 
-            static Array<Object<TheTag>> New(JNIEnv& env, jsize length, const Class<TheTag>& clazz, const Object<TheTag>& initialElement = Object<TheTag>())
+            static Array<Object<TheTag>> New(JNIEnv& env, jsize length, const Object<TheTag>& initialElement = Object<TheTag>())
                {
-                return Array<Object<TheTag>>(&NewObjectArray(env, length, clazz, initialElement.Get()));
+                return Array<Object<TheTag>>(&NewObjectArray(env, length, Class<TheTag>::Singleton(env), initialElement.Get()));
                }
 
             Global<Array<Object<TheTag>>> NewGlobalRef(JNIEnv& env) const
