@@ -20,3 +20,4 @@
 #include <jni/static_field.hpp>
 #include <jni/native_method.hpp>
 #include <jni/boxing.hpp>
+#include <jni/advanced_ownership.hpp>

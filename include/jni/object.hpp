@@ -132,14 +132,16 @@ namespace jni
                 CallNonvirtualMethod<void>(env, obj, clazz, method, Untag(args)...);
                }
 
-            Global<Object<TagType>> NewGlobalRef(JNIEnv& env) const
+            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+            Global<Object<TagType>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return SeizeGlobal(env, Object(jni::NewGlobalRef(env, obj).release()));
+                return SeizeGlobal<Deleter>(env, Object(jni::NewGlobalRef(env, obj).release()));
                }
 
-            Weak<Object<TagType>> NewWeakGlobalRef(JNIEnv& env) const
+            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+            Weak<Object<TagType>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
                {
-                return SeizeWeak(env, Object(jni::NewWeakGlobalRef(env, obj).release()));
+                return SeizeWeak<Deleter>(env, Object(jni::NewWeakGlobalRef(env, obj).release()));
                }
 
             Local<Object<TagType>> NewLocalRef(JNIEnv& env) const

@@ -82,42 +82,72 @@ namespace jni
             const D& get_deleter() const   { return deleter; }
        };
 
-    template < class T > using Global = UniquePointerlike< T, GlobalRefDeleter >;
-    template < class T > using Weak   = UniquePointerlike< T, WeakGlobalRefDeleter >;
-    template < class T > using Local  = UniquePointerlike< T, LocalRefDeleter >;
+
+    template < class T, template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+    using Global = UniquePointerlike< T, Deleter<&JNIEnv::DeleteGlobalRef> >;
+
+    template < template < RefDeletionMethod > class Deleter, class T >
+    Global<T, Deleter> SeizeGlobal(JNIEnv& env, T&& t)
+       {
+        return Global<T, Deleter>(std::move(t), Deleter<&JNIEnv::DeleteGlobalRef>(env));
+       }
 
     template < class T >
     Global<T> SeizeGlobal(JNIEnv& env, T&& t)
        {
-        return Global<T>(std::move(t), GlobalRefDeleter(env));
+        return SeizeGlobal<DefaultRefDeleter>(env, std::move(t));
+       }
+
+
+    template < class T, template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+    using Weak = UniquePointerlike< T, Deleter<&JNIEnv::DeleteWeakGlobalRef> >;
+
+    template < template < RefDeletionMethod > class Deleter, class T >
+    Weak<T, Deleter> SeizeWeak(JNIEnv& env, T&& t)
+       {
+        return Weak<T, Deleter>(std::move(t), Deleter<&JNIEnv::DeleteWeakGlobalRef>(env));
        }
 
     template < class T >
     Weak<T> SeizeWeak(JNIEnv& env, T&& t)
        {
-        return Weak<T>(std::move(t), WeakGlobalRefDeleter(env));
+        return SeizeWeak<DefaultRefDeleter>(env, std::move(t));
        }
+
+
+    // Not parameterized by Deleter because local references should be short-lived enough
+    // that DefaultRefDeleter suffices in all cases.
+    template < class T >
+    using Local = UniquePointerlike< T, DefaultRefDeleter<&JNIEnv::DeleteLocalRef> >;
 
     template < class T >
     Local<T> SeizeLocal(JNIEnv& env, T&& t)
        {
-        return Local<T>(std::move(t), LocalRefDeleter(env));
+        return Local<T>(std::move(t), DefaultRefDeleter<&JNIEnv::DeleteLocalRef>(env));
        }
+
 
     // Attempt to promote a weak reference to a strong one. Returns an empty result
     // if the weak reference has expired.
-    template < class T >
-    Global<T> NewGlobal(JNIEnv& env, const Weak<T>& t)
+    template < template < RefDeletionMethod > class Deleter, class T, template < RefDeletionMethod > class WeakDeleter >
+    Global<T, Deleter> NewGlobal(JNIEnv& env, const Weak<T, WeakDeleter>& t)
        {
         jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t->Get())));
         CheckJavaException(env);
-        return SeizeGlobal(env, T(obj));
+        return SeizeGlobal<Deleter>(env, T(obj));
        }
+
+    template < class T >
+    Global<T> NewGlobal(JNIEnv& env, const Weak<T>& t)
+       {
+        return NewGlobal<DefaultRefDeleter>(env, t);
+       }
+
 
     // Attempt to promote a weak reference to a strong one. Returns an empty result
     // if the weak reference has expired.
-    template < class T >
-    Local<T> NewLocal(JNIEnv& env, const Weak<T>& t)
+    template < class T, template < RefDeletionMethod > class WeakDeleter >
+    Local<T> NewLocal(JNIEnv& env, const Weak<T, WeakDeleter>& t)
        {
         jobject* obj = Wrap<jobject*>(env.NewLocalRef(Unwrap(t->Get())));
         CheckJavaException(env);

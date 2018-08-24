@@ -20,73 +20,39 @@ namespace jni
     using UniqueLocalFrame = std::unique_ptr< JNIEnv, LocalFrameDeleter >;
 
 
-    class GlobalRefDeleter
+    using RefDeletionMethod = void (JNIEnv::*)(::jobject);
+
+    template < RefDeletionMethod DeleteRef >
+    class DefaultRefDeleter
        {
         private:
             JNIEnv* env = nullptr;
 
         public:
-            GlobalRefDeleter() = default;
-            GlobalRefDeleter(JNIEnv& e) : env(&e) {}
+            DefaultRefDeleter() = default;
+            DefaultRefDeleter(JNIEnv& e) : env(&e) {}
 
             void operator()(jobject* p) const
                {
                 if (p)
                    {
                     assert(env);
-                    env->DeleteGlobalRef(Unwrap(p));
+                    (env->*DeleteRef)(Unwrap(p));
                    }
                }
        };
 
+
+    template < class T, template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+    using UniqueGlobalRef = std::unique_ptr< T, Deleter<&JNIEnv::DeleteGlobalRef> >;
+
+    template < class T, template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+    using UniqueWeakGlobalRef = std::unique_ptr< T, Deleter<&JNIEnv::DeleteWeakGlobalRef> >;
+
+    // Not parameterized by Deleter because local references should be short-lived enough
+    // that DefaultRefDeleter suffices in all cases.
     template < class T >
-    using UniqueGlobalRef = std::unique_ptr< T, GlobalRefDeleter >;
-
-
-    class WeakGlobalRefDeleter
-       {
-        private:
-            JNIEnv* env = nullptr;
-
-        public:
-            WeakGlobalRefDeleter() = default;
-            WeakGlobalRefDeleter(JNIEnv& e) : env(&e) {}
-
-            void operator()(jobject* p) const
-               {
-                if (p)
-                   {
-                    assert(env);
-                    env->DeleteWeakGlobalRef(Unwrap(p));
-                   }
-               }
-       };
-
-    template < class T >
-    using UniqueWeakGlobalRef = std::unique_ptr< T, WeakGlobalRefDeleter >;
-
-
-    class LocalRefDeleter
-       {
-        private:
-            JNIEnv* env = nullptr;
-
-        public:
-            LocalRefDeleter() = default;
-            LocalRefDeleter(JNIEnv& e) : env(&e) {}
-
-            void operator()(jobject* p) const
-               {
-                if (p)
-                   {
-                    assert(env);
-                    env->DeleteLocalRef(Unwrap(p));
-                   }
-               }
-       };
-
-    template < class T >
-    using UniqueLocalRef = std::unique_ptr< T, LocalRefDeleter >;
+    using UniqueLocalRef = std::unique_ptr< T, DefaultRefDeleter<&JNIEnv::DeleteLocalRef> >;
 
 
     class StringCharsDeleter

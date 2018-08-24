@@ -128,27 +128,40 @@ namespace jni
        }
 
 
-    template < class T >
-    UniqueGlobalRef<T> NewGlobalRef(JNIEnv& env, T* t)
+    template < template < RefDeletionMethod > class Deleter, class T >
+    UniqueGlobalRef<T, Deleter> NewGlobalRef(JNIEnv& env, T* t)
        {
         jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t)));
         CheckJavaException(env);
         if (t && !obj)
             throw std::bad_alloc();
-        return UniqueGlobalRef<T>(reinterpret_cast<T*>(obj), GlobalRefDeleter(env));
+        return UniqueGlobalRef<T, Deleter>(reinterpret_cast<T*>(obj), Deleter<&JNIEnv::DeleteGlobalRef>(env));
+       }
+
+    template < class T >
+    UniqueGlobalRef<T> NewGlobalRef(JNIEnv& env, T* t)
+       {
+        return NewGlobalRef<DefaultRefDeleter>(env, t);
        }
 
     // Attempt to promote a weak reference to a strong one. Returns an empty result
     // if the weak reference has expired.
-    template < class T >
-    UniqueGlobalRef<T> NewGlobalRef(JNIEnv& env, const UniqueWeakGlobalRef<T>& t)
+    template < template < RefDeletionMethod > class Deleter, class T, template < RefDeletionMethod > class WeakDeleter >
+    UniqueGlobalRef<T, Deleter> NewGlobalRef(JNIEnv& env, const UniqueWeakGlobalRef<T, WeakDeleter>& t)
        {
         jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t)));
         CheckJavaException(env);
-        return UniqueGlobalRef<T>(reinterpret_cast<T*>(obj), GlobalRefDeleter(env));
+        return UniqueGlobalRef<T, Deleter>(reinterpret_cast<T*>(obj), Deleter<&JNIEnv::DeleteGlobalRef>(env));
        }
 
-    inline void DeleteGlobalRef(JNIEnv& env, UniqueGlobalRef<jobject>&& ref)
+    template < class T, template < RefDeletionMethod > class WeakDeleter >
+    UniqueGlobalRef<T> NewGlobalRef(JNIEnv& env, const UniqueWeakGlobalRef<T, WeakDeleter>& t)
+       {
+        return NewGlobalRef<DefaultRefDeleter>(env, t);
+       }
+
+    template < class T, template < RefDeletionMethod > class Deleter >
+    void DeleteGlobalRef(JNIEnv& env, UniqueGlobalRef<T, Deleter>&& ref)
        {
         env.DeleteGlobalRef(Unwrap(ref.release()));
         CheckJavaException(env);
@@ -162,20 +175,21 @@ namespace jni
         CheckJavaException(env);
         if (t && !obj)
             throw std::bad_alloc();
-        return UniqueLocalRef<T>(reinterpret_cast<T*>(obj), LocalRefDeleter(env));
+        return UniqueLocalRef<T>(reinterpret_cast<T*>(obj), DefaultRefDeleter<&JNIEnv::DeleteLocalRef>(env));
        }
 
     // Attempt to promote a weak reference to a strong one. Returns an empty result
     // if the weak reference has expired.
-    template < class T >
-    UniqueLocalRef<T> NewLocalRef(JNIEnv& env, const UniqueWeakGlobalRef<T>& t)
+    template < class T, template < RefDeletionMethod > class WeakDeleter >
+    UniqueLocalRef<T> NewLocalRef(JNIEnv& env, const UniqueWeakGlobalRef<T, WeakDeleter>& t)
        {
         jobject* obj = Wrap<jobject*>(env.NewLocalRef(Unwrap(t)));
         CheckJavaException(env);
-        return UniqueLocalRef<T>(reinterpret_cast<T*>(obj), LocalRefDeleter(env));
+        return UniqueLocalRef<T>(reinterpret_cast<T*>(obj), DefaultRefDeleter<&JNIEnv::DeleteLocalRef>(env));
        }
 
-    inline void DeleteLocalRef(JNIEnv& env, UniqueLocalRef<jobject>&& ref)
+    template < class T >
+    void DeleteLocalRef(JNIEnv& env, UniqueLocalRef<T>&& ref)
        {
         env.DeleteLocalRef(Unwrap(ref.release()));
         CheckJavaException(env);
@@ -186,17 +200,25 @@ namespace jni
         CheckJavaExceptionThenErrorCode(env, env.EnsureLocalCapacity(capacity));
        }
 
-    template < class T >
-    UniqueWeakGlobalRef<T> NewWeakGlobalRef(JNIEnv& env, T* t)
+
+    template < template < RefDeletionMethod > class Deleter, class T >
+    UniqueWeakGlobalRef<T, Deleter> NewWeakGlobalRef(JNIEnv& env, T* t)
        {
         jobject* obj = Wrap<jobject*>(env.NewWeakGlobalRef(Unwrap(t)));
         CheckJavaException(env);
         if (t && !obj)
             throw std::bad_alloc();
-        return UniqueWeakGlobalRef<T>(reinterpret_cast<T*>(obj), WeakGlobalRefDeleter(env));
+        return UniqueWeakGlobalRef<T, Deleter>(reinterpret_cast<T*>(obj), Deleter<&JNIEnv::DeleteWeakGlobalRef>(env));
        }
 
-    inline void DeleteWeakGlobalRef(JNIEnv& env, UniqueWeakGlobalRef<jobject>&& ref)
+    template < class T >
+    UniqueWeakGlobalRef<T> NewWeakGlobalRef(JNIEnv& env, T* t)
+       {
+        return NewWeakGlobalRef<DefaultRefDeleter>(env, t);
+       }
+
+    template < class T, template < RefDeletionMethod > class Deleter >
+    void DeleteWeakGlobalRef(JNIEnv& env, UniqueWeakGlobalRef<T, Deleter>&& ref)
        {
         env.DeleteWeakGlobalRef(Unwrap(ref.release()));
         CheckJavaException(env);

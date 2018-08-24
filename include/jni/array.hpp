@@ -87,9 +87,10 @@ namespace jni
                 return Array<E>(&NewArray<E>(env, length));
                }
 
-            Global<Array<E>> NewGlobalRef(JNIEnv& env) const
+            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+            Global<Array<E>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return SeizeGlobal(env, Array(jni::NewGlobalRef(env, array).release()));
+                return SeizeGlobal<Deleter>(env, Array(jni::NewGlobalRef(env, array).release()));
                }
        };
 
@@ -159,9 +160,10 @@ namespace jni
                 return Array<Object<TheTag>>(&NewObjectArray(env, length, Class<TheTag>::Singleton(env), initialElement.Get()));
                }
 
-            Global<Array<Object<TheTag>>> NewGlobalRef(JNIEnv& env) const
+            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+            Global<Array<Object<TheTag>>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return SeizeGlobal(env, Array(jni::NewGlobalRef(env, array).release()));
+                return SeizeGlobal<Deleter>(env, Array(jni::NewGlobalRef(env, array).release()));
                }
       };
 

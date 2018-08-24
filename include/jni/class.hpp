@@ -147,9 +147,10 @@ namespace jni
                 return StaticMethod<TagType, T>(env, *this, name);
                }
 
-            Global<Class<TagType>> NewGlobalRef(JNIEnv& env) const
+            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+            Global<Class<TagType>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return SeizeGlobal(env, Class(*jni::NewGlobalRef(env, clazz).release()));
+                return SeizeGlobal<Deleter>(env, Class(*jni::NewGlobalRef(env, clazz).release()));
                }
        };
    }
