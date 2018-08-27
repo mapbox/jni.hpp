@@ -129,6 +129,10 @@ namespace jni
 
     // Attempt to promote a weak reference to a strong one. Returns an empty result
     // if the weak reference has expired.
+    //
+    // Beware that the semantics of JNI weak references are weaker than is typically
+    // desired: a JNI weak reference may still be promoted to a non-null strong reference
+    // even during finalization. Consider using jni::WeakReference<T> instead.
     template < template < RefDeletionMethod > class Deleter, class T, template < RefDeletionMethod > class WeakDeleter >
     Global<T, Deleter> NewGlobal(JNIEnv& env, const Weak<T, WeakDeleter>& t)
        {
@@ -146,6 +150,10 @@ namespace jni
 
     // Attempt to promote a weak reference to a strong one. Returns an empty result
     // if the weak reference has expired.
+    //
+    // Beware that the semantics of JNI weak references are weaker than is typically
+    // desired: a JNI weak reference may still be promoted to a non-null strong reference
+    // even during finalization. Consider using jni::WeakReference<T> instead.
     template < class T, template < RefDeletionMethod > class WeakDeleter >
     Local<T> NewLocal(JNIEnv& env, const Weak<T, WeakDeleter>& t)
        {
