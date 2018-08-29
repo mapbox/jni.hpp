@@ -4,7 +4,6 @@
 #include <jni/object.hpp>
 #include <jni/tagging.hpp>
 #include <jni/make.hpp>
-#include <jni/unique_pointerlike.hpp>
 
 namespace jni
    {
@@ -21,11 +20,7 @@ namespace jni
         private:
             UntaggedType* array = nullptr;
 
-            template < class T, class D > friend class UniquePointerlike;
-
-            void reset(UntaggedType* a) { array = a; }
-
-        public:
+        protected:
             explicit Array(std::nullptr_t = nullptr)
                {}
 
@@ -33,17 +28,16 @@ namespace jni
                : array(a)
                {}
 
-            explicit Array(UntaggedType& a)
-               : array(&a)
-               {}
-
             Array(const Array& a)
                : array(a.array)
                {}
 
-            // Not reassignable; it would break UniquePointerlike's abstraction.
-            Array& operator=(const Array&) = delete;
+            ~Array() = default;
 
+            Array& operator=(const Array&) = delete;
+            void reset(UntaggedType* a) { array = a; }
+
+        public:
             explicit operator bool() const { return array; }
 
             operator UntaggedType*() const { return array; }
@@ -82,15 +76,15 @@ namespace jni
                 SetArrayRegion(env, SafeDereference(env, array), start, buf);
                }
 
-            static Array<E> New(JNIEnv& env, jsize length)
+            static Local<Array<E>> New(JNIEnv& env, jsize length)
                {
-                return Array<E>(&NewArray<E>(env, length));
+                return Local<Array<E>>(env, &NewArray<E>(env, length));
                }
 
             template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
             Global<Array<E>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return SeizeGlobal<Deleter>(env, Array(jni::NewGlobalRef(env, array).release()));
+                return Global<Array<E>, Deleter>(env, jni::NewGlobalRef(env, array).release());
                }
        };
 
@@ -106,11 +100,7 @@ namespace jni
         private:
             UntaggedType* array = nullptr;
 
-            template < class T, class D > friend class UniquePointerlike;
-
-            void reset(UntaggedType* a) { array = a; }
-
-        public:
+        protected:
             explicit Array(std::nullptr_t = nullptr)
                {}
 
@@ -118,17 +108,16 @@ namespace jni
                : array(a)
                {}
 
-            explicit Array(UntaggedType& a)
-               : array(&a)
-               {}
-
             Array(const Array& a)
                : array(a.array)
                {}
 
-            // Not reassignable; it would break UniquePointerlike's abstraction.
-            Array& operator=(const Array&) = delete;
+            ~Array() = default;
 
+            Array& operator=(const Array&) = delete;
+            void reset(UntaggedType* a) { array = a; }
+
+        public:
             explicit operator bool() const { return array; }
 
             operator UntaggedType*() const { return array; }
@@ -143,9 +132,9 @@ namespace jni
                 return GetArrayLength(env, SafeDereference(env, array));
                }
 
-            ElementType Get(JNIEnv& env, jsize index) const
+            Local<ElementType> Get(JNIEnv& env, jsize index) const
                {
-                return ElementType(
+                return Local<ElementType>(env,
                     reinterpret_cast<UntaggedElementType*>(
                         GetObjectArrayElement(env, SafeDereference(env, array), index)));
                }
@@ -155,15 +144,15 @@ namespace jni
                 SetObjectArrayElement(env, SafeDereference(env, array), index, Untag(value));
                }
 
-            static Array<Object<TheTag>> New(JNIEnv& env, jsize length, const Object<TheTag>& initialElement = Object<TheTag>())
+            static Local<Array<Object<TheTag>>> New(JNIEnv& env, jsize length, const Object<TheTag>& initialElement = Object<TheTag>())
                {
-                return Array<Object<TheTag>>(&NewObjectArray(env, length, Class<TheTag>::Singleton(env), initialElement.Get()));
+                return Local<Array<Object<TheTag>>>(env, &NewObjectArray(env, length, Class<TheTag>::Singleton(env), initialElement.Get()));
                }
 
             template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
             Global<Array<Object<TheTag>>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return SeizeGlobal<Deleter>(env, Array(jni::NewGlobalRef(env, array).release()));
+                return Global<Array<Object<TheTag>>, Deleter>(env, jni::NewGlobalRef(env, array).release());
                }
       };
 
@@ -177,9 +166,9 @@ namespace jni
        }
 
     template < class T >
-    Array<T> MakeAnything(ThingToMake<Array<T>>, JNIEnv& env, const std::vector<T>& array)
+    Local<Array<T>> MakeAnything(ThingToMake<Array<T>>, JNIEnv& env, const std::vector<T>& array)
        {
-        Array<T> result(&NewArray<T>(env, array.size()));
+        Local<Array<T>> result = Local<Array<T>>(env, &NewArray<T>(env, array.size()));
         SetArrayRegion(env, *result, 0, array);
         return result;
        }
@@ -195,9 +184,9 @@ namespace jni
        }
 
     inline
-    Array<jbyte> MakeAnything(ThingToMake<Array<jbyte>>, JNIEnv& env, const std::string& string)
+    Local<Array<jbyte>> MakeAnything(ThingToMake<Array<jbyte>>, JNIEnv& env, const std::string& string)
        {
-        Array<jbyte> result(&NewArray<jbyte>(env, string.size()));
+        Local<Array<jbyte>> result(env, &NewArray<jbyte>(env, string.size()));
         SetArrayRegion(env, *result, 0, string.size(), reinterpret_cast<const jbyte*>(&string[0]));
         return result;
        }

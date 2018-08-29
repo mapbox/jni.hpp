@@ -74,4 +74,39 @@ namespace jni
                    }
                }
        };
+
+    // A deleter that tries to get the JNIEnv via GetEnv, and does nothing if that fails.
+    //
+    // This is used to ignore GlobalRef deletions that happen after a thread has been detached,
+    // for instance during process shutdown, when there's no need to release the reference anyway.
+    // Specifically, it's what Class<T>::Singleton uses.
+    //
+    template < RefDeletionMethod DeleteRef >
+    class EnvIgnoringDeleter
+       {
+        private:
+            JavaVM* vm = nullptr;
+
+        public:
+            EnvIgnoringDeleter() = default;
+            EnvIgnoringDeleter(JNIEnv& e) : vm(&GetJavaVM(e)) {}
+
+            void operator()(jobject* p) const
+               {
+                if (p)
+                   {
+                    assert(vm);
+                    JNIEnv* env = nullptr;
+                    jint err = vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_1);
+                    if (err == JNI_OK)
+                       {
+                        (env->*DeleteRef)(Unwrap(p));
+                       }
+                    else if (err != JNI_EDETACHED)
+                       {
+                        CheckErrorCode(err);
+                       }
+                   }
+               }
+       };
    }

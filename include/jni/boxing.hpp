@@ -97,7 +97,7 @@ namespace jni
     template < class Tag, class Unboxed >
     struct PrimitiveTypeBoxer
        {
-        Object<Tag> Box(JNIEnv& env, Unboxed unboxed) const
+        Local<Object<Tag>> Box(JNIEnv& env, Unboxed unboxed) const
            {
             static auto klass = Class<Tag>::Singleton(env);
             static auto box = klass.template GetStaticMethod<Object<Tag> (Unboxed)>(env, Tag::BoxStaticMethodName());

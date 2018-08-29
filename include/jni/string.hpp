@@ -31,12 +31,12 @@ namespace jni
             .to_bytes(Make<std::u16string>(env, string));
        }
 
-    inline String MakeAnything(ThingToMake<String>, JNIEnv& env, const std::u16string& string)
+    inline Local<String> MakeAnything(ThingToMake<String>, JNIEnv& env, const std::u16string& string)
        {
-        return String(&NewString(env, string));
+        return Local<String>(env, &NewString(env, string));
        }
 
-    inline String MakeAnything(ThingToMake<String>, JNIEnv& env, const std::string& string)
+    inline Local<String> MakeAnything(ThingToMake<String>, JNIEnv& env, const std::string& string)
        {
         return Make<String>(env, std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>()
             .from_bytes(string));

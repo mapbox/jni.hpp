@@ -107,12 +107,29 @@ namespace jni
            {
             static M method(m);
 
-            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args) -> UntaggedType<R>
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
                {
-                return method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
+                return ReleaseLocal(method(*env, AsLvalue(Tag<std::decay_t<Subject>>(*env, *subject)), AsLvalue(Tag<std::decay_t<Args>>(*env, args))...));
                };
 
-            return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
+            return MakeNativeMethod(name, TypeSignature<BaseType<R> (std::decay_t<Args>...)>()(), wrapper);
+           }
+       };
+
+    template < class T, class Subject, class... Args >
+    struct NativeMethodMaker< void (T::*)(JNIEnv&, Subject, Args...) const >
+       {
+        template < class M >
+        auto operator()(const char* name, const M& m)
+           {
+            static M method(m);
+
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
+               {
+                method(*env, AsLvalue(Tag<std::decay_t<Subject>>(*env, *subject)), AsLvalue(Tag<std::decay_t<Args>>(*env, args))...);
+               };
+
+            return MakeNativeMethod(name, TypeSignature<void (std::decay_t<Args>...)>()(), wrapper);
            }
        };
 
@@ -130,12 +147,26 @@ namespace jni
        {
         auto operator()(const char* name)
            {
-            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args) -> UntaggedType<R>
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
                {
-                return method(*env, Tag<Subject>(*subject), Tag<Args>(args)...);
+                return ReleaseLocal(method(*env, AsLvalue(Tag<std::decay_t<Subject>>(*env, *subject)), AsLvalue(Tag<std::decay_t<Args>>(*env, args))...));
                };
 
-            return MakeNativeMethod(name, TypeSignature<R (Args...)>()(), wrapper);
+            return MakeNativeMethod(name, TypeSignature<BaseType<R> (std::decay_t<Args>...)>()(), wrapper);
+           }
+       };
+
+    template < class Subject, class... Args, void (*method)(JNIEnv&, Subject, Args...) >
+    struct NativeMethodMaker< void (JNIEnv&, Subject, Args...), method >
+       {
+        auto operator()(const char* name)
+           {
+            auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
+               {
+                method(*env, AsLvalue(Tag<std::decay_t<Subject>>(*env, *subject)), AsLvalue(Tag<std::decay_t<Args>>(*env, args))...);
+               };
+
+            return MakeNativeMethod(name, TypeSignature<void (std::decay_t<Args>...)>()(), wrapper);
            }
        };
 
@@ -167,7 +198,7 @@ namespace jni
             template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
             auto operator()(const Field<TagType, jlong>& field)
                {
-                auto wrapper = [field, lambda = lambda] (JNIEnv& env, Object<TagType> obj, Args... args)
+                auto wrapper = [field, lambda = lambda] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
                     return lambda(env, *reinterpret_cast<P*>(obj.Get(env, field)), std::move(args)...);
                    };
@@ -203,7 +234,7 @@ namespace jni
             template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
             auto operator()(const Field<TagType, jlong>& field)
                {
-                auto wrapper = [field] (JNIEnv& env, Object<TagType> obj, Args... args)
+                auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
                     return method(env, *reinterpret_cast<P*>(obj.Get(env, field)), std::move(args)...);
                    };
@@ -240,7 +271,7 @@ namespace jni
             template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
             auto operator()(const Field<TagType, jlong>& field)
                {
-                auto wrapper = [field] (JNIEnv& env, Object<TagType> obj, Args... args)
+                auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
                     return (reinterpret_cast<P*>(obj.Get(env, field))->*method)(env, std::move(args)...);
                    };
@@ -296,7 +327,7 @@ namespace jni
 
         auto MakeInitializer(const Field<TagType, jlong>& field, const char* name, Initializer* initializer) const
            {
-            auto wrapper = [field, initializer] (JNIEnv& e, Object<TagType> obj, std::decay_t<Args>... args)
+            auto wrapper = [field, initializer] (JNIEnv& e, Object<TagType>& obj, std::decay_t<Args>&... args)
                {
                 UniquePeer previous(reinterpret_cast<Peer*>(obj.Get(e, field)));
                 UniquePeer instance(initializer(e, std::move(args)...));
@@ -309,7 +340,7 @@ namespace jni
 
         auto MakeFinalizer(const Field<TagType, jlong>& field, const char* name) const
            {
-            auto wrapper = [field] (JNIEnv& e, Object<TagType> obj)
+            auto wrapper = [field] (JNIEnv& e, Object<TagType>& obj)
                {
                 UniquePeer instance(reinterpret_cast<Peer*>(obj.Get(e, field)));
                 if (instance) obj.Set(e, field, jlong(0));
@@ -337,4 +368,12 @@ namespace jni
             helper.MakeFinalizer(field, finalizeMethodName),
             methods.template operator()<Peer>(field)...);
        }
+
+     // Like std::make_unique, but with non-universal reference arguments, so it can be
+     // explicitly specialized (jni::MakePeer<Peer, jni::jboolean, ...>).
+     template < class Peer, class... Args >
+     std::unique_ptr<Peer> MakePeer(jni::JNIEnv& env, Args... args)
+        {
+         return std::make_unique<Peer>(env, args...);
+        }
    }

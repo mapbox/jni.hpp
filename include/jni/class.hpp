@@ -2,7 +2,7 @@
 
 #include <jni/functions.hpp>
 #include <jni/tagging.hpp>
-#include <jni/unique_pointerlike.hpp>
+#include <jni/advanced_ownership.hpp>
 
 namespace jni
    {
@@ -17,29 +17,28 @@ namespace jni
     class Class
        {
         private:
-            jclass* clazz = nullptr;
-
-            template < class T, class D > friend class UniquePointerlike;
-
-            void reset(jclass* c) { clazz = c; }
-
-        public:
             using TagType = TheTag;
 
+            jclass* clazz = nullptr;
+
+        protected:
             explicit Class(std::nullptr_t = nullptr)
                {}
 
-            explicit Class(jclass& c)
-               : clazz(&c)
+            explicit Class(jclass* c)
+               : clazz(c)
                {}
 
             Class(const Class& c)
                : clazz(c.clazz)
                {}
 
-            // Not reassignable; it would break UniquePointerlike's abstraction.
-            Class& operator=(const Class&) = delete;
+            ~Class() = default;
 
+            Class& operator=(const Class&) = delete;
+            void reset(jclass* c) { clazz = c; }
+
+        public:
             explicit operator bool() const { return clazz; }
 
             operator jclass&() const { return *clazz; }
@@ -49,10 +48,11 @@ namespace jni
             friend bool operator==( const Class& a, const Class& b )  { return a.Get() == b.Get(); }
             friend bool operator!=( const Class& a, const Class& b )  { return !( a == b ); }
 
-            template < class... Args >
-            Object<TagType> New(JNIEnv& env, const Constructor<TagType, Args...>& method, const Args&... args) const
+            template < class... ExpectedArgs, class... ActualArgs >
+            auto New(JNIEnv& env, const Constructor<TagType, ExpectedArgs...>& method, const ActualArgs&... args) const
+               -> std::enable_if_t< Conjunction<std::is_convertible<const ActualArgs&, const ExpectedArgs&>...>::value, Local<Object<TagType>> >
                {
-                return Object<TagType>(&NewObject(env, *clazz, method, Untag(args)...));
+                return Local<Object<TagType>>(env, &NewObject(env, *clazz, method, Untag(args)...));
                }
 
             template < class T >
@@ -64,9 +64,9 @@ namespace jni
 
             template < class T >
             auto Get(JNIEnv& env, const StaticField<TagType, T>& field) const
-               -> std::enable_if_t< !IsPrimitive<T>::value, T >
+               -> std::enable_if_t< !IsPrimitive<T>::value, Local<T> >
                {
-                return T(reinterpret_cast<UntaggedType<T>>(jni::GetStaticField<jobject*>(env, *clazz, field)));
+                return Local<T>(env, reinterpret_cast<UntaggedType<T>>(jni::GetStaticField<jobject*>(env, *clazz, field)));
                }
 
             template < class T >
@@ -76,44 +76,46 @@ namespace jni
                 SetStaticField<T>(env, *clazz, field, value);
                }
 
-            template < class T >
-            auto Set(JNIEnv& env, const StaticField<TagType, T>& field, const T& value) const
-               -> std::enable_if_t< !IsPrimitive<T>::value >
+            template < class Expected, class Actual >
+            auto Set(JNIEnv& env, const StaticField<TagType, Expected>& field, const Actual& value) const
+               -> std::enable_if_t< !IsPrimitive<Expected>::value
+                                 && std::is_convertible<const Actual&, const Expected&>::value >
                {
                 SetStaticField<jobject*>(env, *clazz, field, value.Get());
                }
 
-            template < class R, class... Args >
-            auto Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
-               -> std::enable_if_t< IsPrimitive<R>::value, R >
+            template < class R, class... ExpectedArgs, class... ActualArgs >
+            auto Call(JNIEnv& env, const StaticMethod<TagType, R (ExpectedArgs...)>& method, const ActualArgs&... args) const
+               -> std::enable_if_t< IsPrimitive<R>::value
+                                 && Conjunction<std::is_convertible<const ActualArgs&, const ExpectedArgs&>...>::value, R >
                {
                 return CallStaticMethod<R>(env, *clazz, method, Untag(args)...);
                }
 
-            template < class R, class... Args >
-            auto Call(JNIEnv& env, const StaticMethod<TagType, R (Args...)>& method, const Args&... args) const
-               -> std::enable_if_t< !IsPrimitive<R>::value && !std::is_void<R>::value, R >
+            template < class R, class... ExpectedArgs, class... ActualArgs >
+            auto Call(JNIEnv& env, const StaticMethod<TagType, R (ExpectedArgs...)>& method, const ActualArgs&... args) const
+               -> std::enable_if_t< !IsPrimitive<R>::value
+                                 && !std::is_void<R>::value
+                                 && Conjunction<std::is_convertible<const ActualArgs&, const ExpectedArgs&>...>::value, Local<R> >
                {
-                return R(reinterpret_cast<UntaggedType<R>>(CallStaticMethod<jobject*>(env, *clazz, method, Untag(args)...)));
+                return Local<R>(env, reinterpret_cast<UntaggedType<R>>(CallStaticMethod<jobject*>(env, *clazz, method, Untag(args)...)));
                }
 
-            template < class... Args >
-            void Call(JNIEnv& env, const StaticMethod<TagType, void (Args...)>& method, const Args&... args) const
+            template < class... ExpectedArgs, class... ActualArgs >
+            auto Call(JNIEnv& env, const StaticMethod<TagType, void (ExpectedArgs...)>& method, const ActualArgs&... args) const
+               -> std::enable_if_t< Conjunction<std::is_convertible<const ActualArgs&, const ExpectedArgs&>...>::value >
                {
                 CallStaticMethod<void>(env, *clazz, method, Untag(args)...);
                }
 
-            static Class Find(JNIEnv& env)
+            static Local<Class> Find(JNIEnv& env)
                {
-                return Class(FindClass(env, TagType::Name()));
+                return Local<Class>(env, &FindClass(env, TagType::Name()));
                }
 
             static const Class& Singleton(JNIEnv& env)
                {
-                // The global references created here is purposefully leaked. Due to the design
-                // of Java/JNI, there is virtually no way to reliably release them. See
-                // http://bleaklow.com/2006/02/18/jni_onunload_mostly_useless.html for details.
-                static Class singleton = Find(env).NewGlobalRef(env).release();
+                static Global<Class, EnvIgnoringDeleter> singleton = Find(env).template NewGlobalRef<EnvIgnoringDeleter>(env);
                 return singleton;
                }
 
@@ -150,7 +152,7 @@ namespace jni
             template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
             Global<Class<TagType>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return SeizeGlobal<Deleter>(env, Class(*jni::NewGlobalRef(env, clazz).release()));
+                return Global<Class<TagType>, Deleter>(env, jni::NewGlobalRef(env, clazz).release());
                }
        };
    }

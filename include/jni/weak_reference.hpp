@@ -20,7 +20,7 @@ namespace jni
         public:
             WeakReference(JNIEnv& env, T referent)
                {
-                static auto klass = Class<WeakReferenceTag>::Singleton(env);
+                static auto& klass = Class<WeakReferenceTag>::Singleton(env);
                 static auto constructor = klass.GetConstructor<Object<>>(env);
                 reference = klass.New(env, constructor, Object<>(referent.Get())).template NewGlobalRef<Deleter>(env);
                }
@@ -32,9 +32,9 @@ namespace jni
                     return Local<T>();
                    }
 
-                static auto klass = Class<WeakReferenceTag>::Singleton(env);
+                static auto& klass = Class<WeakReferenceTag>::Singleton(env);
                 static auto get = klass.template GetMethod<Object<> ()>(env, "get");
-                return SeizeLocal(env, T(reinterpret_cast<UntaggedType<T>>(reference->Call(env, get).Get())));
+                return Local<T>(env, reinterpret_cast<UntaggedType<T>>(reference->Call(env, get).release()));
                }
        };
    }

@@ -24,4 +24,11 @@ namespace jni
 
     template < class T > struct IsArray : std::false_type {};
     template < class E > struct IsArray< jarray<E> > : std::true_type {};
+
+    template < class... > struct Conjunction : std::true_type {};
+    template < class B1 > struct Conjunction<B1> : B1 {};
+    template < class B1, class... Bn > struct Conjunction<B1, Bn...>
+        : std::conditional_t<bool(B1::value), Conjunction<Bn...>, B1> {};
+
+    template < class T > T& AsLvalue(T&& x) { return x; }
    }
