@@ -10,11 +10,6 @@
 
 namespace jni
    {
-    struct StringTag : public ObjectTag { static constexpr auto Name() { return "java/lang/String"; } };
-
-    template <>
-    struct UntaggedObjectType<StringTag> { using Type = jstring; };
-
     using String = Object<StringTag>;
 
     inline std::u16string MakeAnything(ThingToMake<std::u16string>, JNIEnv& env, const String& string)

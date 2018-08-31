@@ -6,35 +6,6 @@
 
 namespace jni
    {
-    template < class T >
-    auto Untag(T primitive)
-       -> std::enable_if_t< IsPrimitive<T>::value, T >
-       {
-        return primitive;
-       }
-
-    template < class T >
-    auto Untag(const T& t)
-       -> std::enable_if_t< !IsPrimitive<T>::value, decltype(t.Get()) >
-       {
-        return t.Get();
-       }
-
-    template < class T >
-    struct UntaggedTypeTraits
-       {
-        using Type = decltype(Untag(std::declval<T>()));
-       };
-
-    template <>
-    struct UntaggedTypeTraits<void>
-       {
-        using Type = void;
-       };
-
-    template < class T >
-    using UntaggedType = typename UntaggedTypeTraits<T>::Type;
-
     /*
         The interface for high-level references. Client code using the high-level API
         will most often work with values of this class template, using the following aliases:
@@ -79,12 +50,13 @@ namespace jni
 
         public:
             using Base = T;
+            using UntaggedType = typename T::UntaggedType;
 
             explicit Tagged(std::nullptr_t ptr = nullptr)
                : T(ptr),
                  deleter() {}
 
-            explicit Tagged(JNIEnv& env, UntaggedType<T> ptr)
+            explicit Tagged(JNIEnv& env, UntaggedType* ptr)
                : T(ptr),
                  deleter(env) {}
 
@@ -109,9 +81,9 @@ namespace jni
                 return *this;
                }
 
-            void reset(UntaggedType<T> ptr = nullptr)
+            void reset(UntaggedType* ptr = nullptr)
                {
-                UntaggedType<T> current = T::Get();
+                UntaggedType* current = T::Get();
                 T::reset(ptr);
                 if (current)
                    {
@@ -119,9 +91,9 @@ namespace jni
                    }
                }
 
-            UntaggedType<T> release()
+            UntaggedType* release()
                {
-                UntaggedType<T> current = T::Get();
+                UntaggedType* current = T::Get();
                 T::reset(nullptr);
                 return current;
                }
@@ -212,6 +184,36 @@ namespace jni
        {
         return Input<T>(env, &u);
        }
+
+
+    template < class T >
+    auto Untag(T primitive)
+       -> std::enable_if_t< IsPrimitive<T>::value, T >
+       {
+        return primitive;
+       }
+
+    template < class T >
+    auto Untag(const T& t)
+       -> std::enable_if_t< !IsPrimitive<T>::value, decltype(t.Get()) >
+       {
+        return t.Get();
+       }
+
+    template < class T >
+    struct UntaggedTypeTraits
+       {
+        using Type = decltype(Untag(std::declval<T>()));
+       };
+
+    template <>
+    struct UntaggedTypeTraits<void>
+       {
+        using Type = void;
+       };
+
+    template < class T >
+    using UntaggedType = typename UntaggedTypeTraits<T>::Type;
 
 
     template < class T >

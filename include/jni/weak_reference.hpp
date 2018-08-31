@@ -18,11 +18,11 @@ namespace jni
             Global<Object<WeakReferenceTag>, Deleter> reference;
 
         public:
-            WeakReference(JNIEnv& env, T referent)
+            WeakReference(JNIEnv& env, const T& referent)
                {
                 static auto& klass = Class<WeakReferenceTag>::Singleton(env);
                 static auto constructor = klass.GetConstructor<Object<>>(env);
-                reference = klass.New(env, constructor, Object<>(referent.Get())).template NewGlobalRef<Deleter>(env);
+                reference = klass.New(env, constructor, referent).template NewGlobalRef<Deleter>(env);
                }
 
             Local<T> get(JNIEnv& env)
@@ -34,7 +34,7 @@ namespace jni
 
                 static auto& klass = Class<WeakReferenceTag>::Singleton(env);
                 static auto get = klass.template GetMethod<Object<> ()>(env, "get");
-                return Local<T>(env, reinterpret_cast<UntaggedType<T>>(reference->Call(env, get).release()));
+                return Local<T>(env, reinterpret_cast<typename T::UntaggedType*>(reference.Call(env, get).release()));
                }
        };
    }

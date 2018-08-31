@@ -200,7 +200,7 @@ namespace jni
                {
                 auto wrapper = [field, lambda = lambda] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
-                    return lambda(env, *reinterpret_cast<P*>(obj.Get(env, field)), std::move(args)...);
+                    return lambda(env, *reinterpret_cast<P*>(obj.Get(env, field)), args...);
                    };
 
                 return MakeNativeMethod(name, wrapper);
@@ -236,7 +236,7 @@ namespace jni
                {
                 auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
-                    return method(env, *reinterpret_cast<P*>(obj.Get(env, field)), std::move(args)...);
+                    return method(env, *reinterpret_cast<P*>(obj.Get(env, field)), args...);
                    };
 
                 return MakeNativeMethod(name, wrapper);
@@ -273,7 +273,7 @@ namespace jni
                {
                 auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
-                    return (reinterpret_cast<P*>(obj.Get(env, field))->*method)(env, std::move(args)...);
+                    return (reinterpret_cast<P*>(obj.Get(env, field))->*method)(env, args...);
                    };
 
                 return MakeNativeMethod(name, wrapper);
@@ -330,7 +330,7 @@ namespace jni
             auto wrapper = [field, initializer] (JNIEnv& e, Object<TagType>& obj, std::decay_t<Args>&... args)
                {
                 UniquePeer previous(reinterpret_cast<Peer*>(obj.Get(e, field)));
-                UniquePeer instance(initializer(e, std::move(args)...));
+                UniquePeer instance(initializer(e, args...));
                 obj.Set(e, field, reinterpret_cast<jlong>(instance.get()));
                 instance.release();
                };

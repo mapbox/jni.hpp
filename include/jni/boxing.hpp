@@ -9,15 +9,15 @@ namespace jni
     template < class > struct Unboxer;
 
     template < class Unboxed >
-    auto Box(JNIEnv& env, Unboxed&& unboxed)
+    decltype(auto) Box(JNIEnv& env, Unboxed&& unboxed)
        {
         return Boxer<typename std::decay<Unboxed>::type>().Box(env, std::forward<Unboxed>(unboxed));
        }
 
-    template < class Tag >
-    auto Unbox(JNIEnv& env, const Object<Tag>& boxed)
+    template < class T >
+    decltype(auto) Unbox(JNIEnv& env, const T& boxed)
        {
-        return Unboxer<Tag>().Unbox(env, boxed);
+        return Unboxer<typename T::TagType>().Unbox(env, boxed);
        }
 
 
@@ -99,7 +99,7 @@ namespace jni
        {
         Local<Object<Tag>> Box(JNIEnv& env, Unboxed unboxed) const
            {
-            static auto klass = Class<Tag>::Singleton(env);
+            static auto& klass = Class<Tag>::Singleton(env);
             static auto box = klass.template GetStaticMethod<Object<Tag> (Unboxed)>(env, Tag::BoxStaticMethodName());
             return klass.Call(env, box, unboxed);
            }
@@ -120,7 +120,7 @@ namespace jni
        {
         Unboxed Unbox(JNIEnv& env, const Object<Tag>& boxed) const
            {
-            static auto klass = Class<Tag>::Singleton(env);
+            static auto& klass = Class<Tag>::Singleton(env);
             static auto unbox = klass.template GetMethod<Unboxed ()>(env, Tag::UnboxMethodName());
             return boxed.Call(env, unbox);
            }

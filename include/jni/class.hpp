@@ -16,9 +16,11 @@ namespace jni
     template < class TheTag >
     class Class
        {
-        private:
+        public:
             using TagType = TheTag;
+            using UntaggedType = jclass;
 
+        private:
             jclass* clazz = nullptr;
 
         protected:
@@ -66,7 +68,7 @@ namespace jni
             auto Get(JNIEnv& env, const StaticField<TagType, T>& field) const
                -> std::enable_if_t< !IsPrimitive<T>::value, Local<T> >
                {
-                return Local<T>(env, reinterpret_cast<UntaggedType<T>>(jni::GetStaticField<jobject*>(env, *clazz, field)));
+                return Local<T>(env, reinterpret_cast<typename T::UntaggedType*>(jni::GetStaticField<jobject*>(env, *clazz, field)));
                }
 
             template < class T >
@@ -98,7 +100,7 @@ namespace jni
                                  && !std::is_void<R>::value
                                  && Conjunction<std::is_convertible<const ActualArgs&, const ExpectedArgs&>...>::value, Local<R> >
                {
-                return Local<R>(env, reinterpret_cast<UntaggedType<R>>(CallStaticMethod<jobject*>(env, *clazz, method, Untag(args)...)));
+                return Local<R>(env, reinterpret_cast<typename R::UntaggedType*>(CallStaticMethod<jobject*>(env, *clazz, method, Untag(args)...)));
                }
 
             template < class... ExpectedArgs, class... ActualArgs >

@@ -95,7 +95,7 @@ namespace jni
             using TagType = TheTag;
             using ElementType = Object<TagType>;
             using UntaggedType = jarray<jobject>;
-            using UntaggedElementType = typename ElementType::UntaggedObjectType;
+            using UntaggedElementType = typename ElementType::UntaggedType;
 
         private:
             UntaggedType* array = nullptr;
