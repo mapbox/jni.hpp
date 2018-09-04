@@ -156,5 +156,16 @@ namespace jni
                {
                 return Global<Class<TagType>, Deleter>(env, jni::NewGlobalRef(env, clazz).release());
                }
+
+            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+            Weak<Class<TagType>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
+               {
+                return Weak<Class<TagType>, Deleter>(env, jni::NewWeakGlobalRef(env, clazz).release());
+               }
+
+            Local<Class<TagType>> NewLocalRef(JNIEnv& env) const
+               {
+                return Local<Class<TagType>>(env, jni::NewLocalRef(env, clazz).release());
+               }
        };
    }

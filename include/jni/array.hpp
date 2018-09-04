@@ -86,6 +86,17 @@ namespace jni
                {
                 return Global<Array<E>, Deleter>(env, jni::NewGlobalRef(env, array).release());
                }
+
+            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+            Weak<Array<E>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
+               {
+                return Weak<Array<E>, Deleter>(env, jni::NewWeakGlobalRef(env, array).release());
+               }
+
+            Local<Array<E>> NewLocalRef(JNIEnv& env) const
+               {
+                return Local<Array<E>>(env, jni::NewLocalRef(env, array).release());
+               }
        };
 
     template < class TheTag >
@@ -153,6 +164,17 @@ namespace jni
             Global<Array<Object<TheTag>>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
                 return Global<Array<Object<TheTag>>, Deleter>(env, jni::NewGlobalRef(env, array).release());
+               }
+
+            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
+            Weak<Array<Object<TheTag>>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
+               {
+                return Weak<Array<Object<TheTag>>, Deleter>(env, jni::NewWeakGlobalRef(env, array).release());
+               }
+
+            Local<Array<Object<TheTag>>> NewLocalRef(JNIEnv& env) const
+               {
+                return Local<Array<Object<TheTag>>>(env, jni::NewLocalRef(env, array).release());
                }
       };
 
