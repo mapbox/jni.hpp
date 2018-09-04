@@ -144,9 +144,9 @@ namespace jni
                 SetObjectArrayElement(env, SafeDereference(env, array), index, Untag(value));
                }
 
-            static Local<Array<Object<TheTag>>> New(JNIEnv& env, jsize length, const Object<TheTag>& initialElement = Object<TheTag>())
+            static Local<Array<Object<TheTag>>> New(JNIEnv& env, jsize length, const Object<TheTag>* initialElement = nullptr)
                {
-                return Local<Array<Object<TheTag>>>(env, &NewObjectArray(env, length, Class<TheTag>::Singleton(env), initialElement.Get()));
+                return Local<Array<Object<TheTag>>>(env, &NewObjectArray(env, length, Class<TheTag>::Singleton(env), initialElement ? initialElement->Get() : nullptr));
                }
 
             template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
