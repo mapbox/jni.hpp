@@ -57,7 +57,7 @@ static void RegisterHighLevel(JavaVM* vm)
                 u"Hello, " + jni::Make<std::u16string>(env, args.Get(env, 0)) + u" (Native High-Level)"));
        };
 
-    jni::RegisterNatives(env, jni::Class<Greeter>::Find(env),
+    jni::RegisterNatives(env, *jni::Class<Greeter>::Find(env),
          jni::MakeNativeMethod("greet", greet));
    }
 

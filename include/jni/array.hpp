@@ -40,7 +40,6 @@ namespace jni
         public:
             explicit operator bool() const { return array; }
 
-            operator UntaggedType*() const { return array; }
             UntaggedType& operator*() const { return *array; }
             UntaggedType* Get() const { return array; }
 
@@ -131,7 +130,6 @@ namespace jni
         public:
             explicit operator bool() const { return array; }
 
-            operator UntaggedType*() const { return array; }
             UntaggedType& operator*() const { return *array; }
             UntaggedType* Get() const { return array; }
 

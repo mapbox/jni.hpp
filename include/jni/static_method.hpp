@@ -23,7 +23,7 @@ namespace jni
             using ReturnType = R;
 
             StaticMethod(JNIEnv& env, const Class<TagType>& clazz, const char* name)
-              : method(GetStaticMethodID(env, clazz, name, TypeSignature<R (Args...)>()()))
+              : method(GetStaticMethodID(env, *clazz, name, TypeSignature<R (Args...)>()()))
                {}
 
             operator jmethodID&() const { return method; }

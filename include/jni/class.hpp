@@ -43,7 +43,6 @@ namespace jni
         public:
             explicit operator bool() const { return clazz; }
 
-            operator jclass&() const { return *clazz; }
             jclass& operator*() const { return *clazz; }
             jclass* Get() const { return clazz; }
 

@@ -47,7 +47,7 @@ namespace jni
             template < class OtherTag >
             bool IsInstanceOf(JNIEnv& env, const Class<OtherTag>& clazz) const
                {
-                return jni::IsInstanceOf(env, ptr, clazz);
+                return jni::IsInstanceOf(env, ptr, *clazz);
                }
        };
 
@@ -98,8 +98,6 @@ namespace jni
 
         public:
             UntaggedType* Get() const { return reinterpret_cast<UntaggedType*>(this->ptr); }
-
-            operator UntaggedType*() const { return Get(); }
             UntaggedType& operator*() const { return *Get(); }
 
             template < class T >

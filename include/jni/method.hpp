@@ -23,7 +23,7 @@ namespace jni
             using ReturnType = R;
 
             Method(JNIEnv& env, const Class<TagType>& clazz, const char* name)
-              : method(GetMethodID(env, clazz, name, TypeSignature<R (Args...)>()()))
+              : method(GetMethodID(env, *clazz, name, TypeSignature<R (Args...)>()()))
                {}
 
             operator jmethodID&() const { return method; }
