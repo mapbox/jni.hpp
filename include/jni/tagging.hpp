@@ -284,19 +284,7 @@ namespace jni
        }
 
     template < class T >
-    struct UntaggedTypeTraits
-       {
-        using Type = decltype(Untag(std::declval<T>()));
-       };
-
-    template <>
-    struct UntaggedTypeTraits<void>
-       {
-        using Type = void;
-       };
-
-    template < class T >
-    using UntaggedType = typename UntaggedTypeTraits<T>::Type;
+    using UntaggedType = decltype(Untag(std::declval<T>()));
 
 
     template < class T >
