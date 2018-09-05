@@ -65,7 +65,7 @@ namespace jni
                  deleter(std::move(other.get_deleter())) {}
 
             template < class U >
-            Tagged(Tagged<U, D>&& other)
+            Tagged(Tagged<U, D>&& other, std::enable_if_t<std::is_convertible<const U&, const T&>::value>* = nullptr)
                : T(other.release()),
                  deleter(std::move(other.get_deleter())) {}
 

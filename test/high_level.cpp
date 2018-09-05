@@ -23,7 +23,10 @@ namespace
        };
 
     struct Base {};
-    struct Derived : public Base {};
+    struct Derived
+       {
+        using SuperTag = Base;
+       };
    }
 
 template < char... Cs >

@@ -54,14 +54,20 @@ namespace jni
     template < class Tag, class Enable = void >
     struct SuperObject;
 
+    template < class Tag, class = int >
+    struct HasSuperTag : std::false_type {};
+
     template < class Tag >
-    struct SuperObject<Tag, typename Tag::SuperTag>
+    struct HasSuperTag<Tag, decltype(std::declval<typename Tag::SuperTag>(), 0)> : std::true_type {};
+
+    template < class Tag >
+    struct SuperObject<Tag, std::enable_if_t<HasSuperTag<Tag>::value>>
        {
         using Type = Object<typename Tag::SuperTag>;
        };
 
     template < class Tag >
-    struct SuperObject<Tag>
+    struct SuperObject<Tag, std::enable_if_t<!HasSuperTag<Tag>::value>>
        {
         using Type = Object<ObjectTag>;
        };
