@@ -6,6 +6,89 @@
 
 namespace jni
    {
+    class ObjectBase;
+    template < class Tag > class Object;
+    template < class E, class = void > class Array;
+    template < class > struct TypeSignature;
+
+
+    struct ObjectTag
+       {
+        static constexpr auto Name() { return "java/lang/Object"; }
+       };
+
+    struct StringTag
+       {
+        static constexpr auto Name() { return "java/lang/String"; }
+       };
+
+    struct ClassTag
+       {
+        static constexpr auto Name() { return "java/lang/Class"; }
+       };
+
+    template < class T >
+    struct ArrayTag
+       {
+        static constexpr auto Name() { return TypeSignature<Array<T>>()(); }
+       };
+
+
+    template < class Tag, class = int >
+    struct SuperTag
+       {
+        using Type = ObjectTag;
+       };
+
+    template < class Tag >
+    struct SuperTag< Tag, decltype(std::declval<typename Tag::SuperTag>(), 0) >
+       {
+        using Type = typename Tag::SuperTag;
+       };
+
+    template < class Tag, class Enable = void >
+    struct TagTraits
+       {
+        using SuperType = Object<typename SuperTag<Tag>::Type>;
+        using UntaggedType = jobject;
+       };
+
+    template <>
+    struct TagTraits< ObjectTag >
+        {
+         using SuperType = ObjectBase;
+         using UntaggedType = jobject;
+        };
+
+    template <>
+    struct TagTraits< StringTag >
+        {
+         using SuperType = Object<ObjectTag>;
+         using UntaggedType = jstring;
+        };
+
+    template <>
+    struct TagTraits< ClassTag >
+        {
+         using SuperType = Object<ObjectTag>;
+         using UntaggedType = jclass;
+        };
+
+    template < class E >
+    struct TagTraits< ArrayTag<E>, std::enable_if_t<IsPrimitive<E>::value> >
+        {
+         using SuperType = Object<ObjectTag>;
+         using UntaggedType = jarray<E>;
+        };
+
+    template < class Tag >
+    struct TagTraits< ArrayTag<Object<Tag>> >
+        {
+         using SuperType = Object<ObjectTag>;
+         using UntaggedType = jarray<jobject>;
+        };
+
+
     /*
         The interface for high-level references. Client code using the high-level API
         will most often work with values of this class template, using the following aliases:
@@ -83,7 +166,7 @@ namespace jni
 
             void reset(UntaggedType* ptr = nullptr)
                {
-                UntaggedType* current = T::Get();
+                UntaggedType* current = this->get();
                 T::reset(ptr);
                 if (current)
                    {
@@ -93,7 +176,7 @@ namespace jni
 
             UntaggedType* release()
                {
-                UntaggedType* current = T::Get();
+                UntaggedType* current = this->get();
                 T::reset(nullptr);
                 return current;
                }
@@ -137,7 +220,7 @@ namespace jni
     template < template < RefDeletionMethod > class Deleter, class T, template < RefDeletionMethod > class WeakDeleter >
     Global<T, Deleter> NewGlobal(JNIEnv& env, const Weak<T, WeakDeleter>& t)
        {
-        jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t->Get())));
+        jobject* obj = Wrap<jobject*>(env.NewGlobalRef(Unwrap(t->get())));
         CheckJavaException(env);
         return Global<T, Deleter>(env, obj);
        }
@@ -158,7 +241,7 @@ namespace jni
     template < class T, template < RefDeletionMethod > class WeakDeleter >
     Local<T> NewLocal(JNIEnv& env, const Weak<T, WeakDeleter>& t)
        {
-        jobject* obj = Wrap<jobject*>(env.NewLocalRef(Unwrap(t->Get())));
+        jobject* obj = Wrap<jobject*>(env.NewLocalRef(Unwrap(t->get())));
         CheckJavaException(env);
         return Local<T>(env, obj);
        }
@@ -195,9 +278,9 @@ namespace jni
 
     template < class T >
     auto Untag(const T& t)
-       -> std::enable_if_t< !IsPrimitive<T>::value, decltype(t.Get()) >
+       -> std::enable_if_t< !IsPrimitive<T>::value, decltype(t.get()) >
        {
-        return t.Get();
+        return t.get();
        }
 
     template < class T >

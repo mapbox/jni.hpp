@@ -14,7 +14,7 @@ namespace jni
 
     inline std::u16string MakeAnything(ThingToMake<std::u16string>, JNIEnv& env, const String& string)
        {
-        NullCheck(env, string.Get());
+        NullCheck(env, string.get());
         std::u16string result(jni::GetStringLength(env, *string), char16_t());
         jni::GetStringRegion(env, *string, 0, result);
         return result;

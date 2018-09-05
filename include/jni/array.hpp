@@ -7,72 +7,56 @@
 
 namespace jni
    {
-    template < class E, class Enable = void >
+    template < class E, class Enable >
     class Array;
 
     template < class E >
-    class Array< E, std::enable_if_t<IsPrimitive<E>::value> >
+    class Array< E, std::enable_if_t<IsPrimitive<E>::value> > : public Object< ArrayTag<E> >
        {
         public:
+            using SuperType = Object< ArrayTag<E> >;
+            using UntaggedType = typename SuperType::UntaggedType;
             using ElementType = E;
-            using UntaggedType = jarray<E>;
-
-        private:
-            UntaggedType* array = nullptr;
 
         protected:
             explicit Array(std::nullptr_t = nullptr)
                {}
 
-            explicit Array(UntaggedType* a)
-               : array(a)
+            explicit Array(UntaggedType* p)
+               : SuperType(p)
                {}
 
-            Array(const Array& a)
-               : array(a.array)
-               {}
-
-            ~Array() = default;
-
+            Array(const Array&) = delete;
             Array& operator=(const Array&) = delete;
-            void reset(UntaggedType* a) { array = a; }
 
         public:
-            explicit operator bool() const { return array; }
-
-            UntaggedType& operator*() const { return *array; }
-            UntaggedType* Get() const { return array; }
-
-            friend bool operator==( const Array& a, const Array& b )  { return a.Get() == b.Get(); }
-            friend bool operator!=( const Array& a, const Array& b )  { return !( a == b ); }
-
             jsize Length(JNIEnv& env) const
                {
-                return GetArrayLength(env, SafeDereference(env, array));
+                return GetArrayLength(env, SafeDereference(env, this->get()));
                }
 
             ElementType Get(JNIEnv& env, jsize index) const
                {
                 ElementType e;
-                GetArrayRegion(env, SafeDereference(env, array), index, 1, &e);
+                GetArrayRegion(env, SafeDereference(env, this->get()), index, 1, &e);
                 return e;
                }
 
             void Set(JNIEnv& env, jsize index, const ElementType& value)
                {
-                SetArrayRegion(env, SafeDereference(env, array), index, 1, &value);
+                SetArrayRegion(env, SafeDereference(env, this->get()), index, 1, &value);
                }
 
             template < class Array >
             void GetRegion(JNIEnv& env, jsize start, Array& buf) const
                {
-                GetArrayRegion(env, SafeDereference(env, array), start, buf);
+                GetArrayRegion(env, SafeDereference(env, this->get()), start, buf);
                }
 
             template < class Array >
             void SetRegion(JNIEnv& env, jsize start, const Array& buf)
                {
-                SetArrayRegion(env, SafeDereference(env, array), start, buf);
+                SetArrayRegion(env, SafeDereference(env, this->get()), start, buf);
                }
 
             static Local<Array<E>> New(JNIEnv& env, jsize length)
@@ -83,103 +67,87 @@ namespace jni
             template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
             Global<Array<E>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return Global<Array<E>, Deleter>(env, jni::NewGlobalRef(env, array).release());
+                return Global<Array<E>, Deleter>(env, jni::NewGlobalRef(env, this->get()).release());
                }
 
             template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
             Weak<Array<E>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
                {
-                return Weak<Array<E>, Deleter>(env, jni::NewWeakGlobalRef(env, array).release());
+                return Weak<Array<E>, Deleter>(env, jni::NewWeakGlobalRef(env, this->get()).release());
                }
 
             Local<Array<E>> NewLocalRef(JNIEnv& env) const
                {
-                return Local<Array<E>>(env, jni::NewLocalRef(env, array).release());
+                return Local<Array<E>>(env, jni::NewLocalRef(env, this->get()).release());
                }
        };
 
     template < class TheTag >
-    class Array< Object<TheTag> >
+    class Array< Object<TheTag> > : public Object< ArrayTag<Object<TheTag>> >
        {
         public:
+            using SuperType = Object< ArrayTag<Object<TheTag>> >;
+            using UntaggedType = typename SuperType::UntaggedType;
             using TagType = TheTag;
             using ElementType = Object<TagType>;
-            using UntaggedType = jarray<jobject>;
             using UntaggedElementType = typename ElementType::UntaggedType;
-
-        private:
-            UntaggedType* array = nullptr;
 
         protected:
             explicit Array(std::nullptr_t = nullptr)
                {}
 
-            explicit Array(UntaggedType* a)
-               : array(a)
+            explicit Array(UntaggedType* p)
+               : SuperType(p)
                {}
 
-            Array(const Array& a)
-               : array(a.array)
-               {}
-
-            ~Array() = default;
-
+            Array(const Array&) = delete;
             Array& operator=(const Array&) = delete;
-            void reset(UntaggedType* a) { array = a; }
 
         public:
-            explicit operator bool() const { return array; }
-
-            UntaggedType& operator*() const { return *array; }
-            UntaggedType* Get() const { return array; }
-
-            friend bool operator==( const Array& a, const Array& b )  { return a.Get() == b.Get(); }
-            friend bool operator!=( const Array& a, const Array& b )  { return !( a == b ); }
-
             jsize Length(JNIEnv& env) const
                {
-                return GetArrayLength(env, SafeDereference(env, array));
+                return GetArrayLength(env, SafeDereference(env, this->get()));
                }
 
             Local<ElementType> Get(JNIEnv& env, jsize index) const
                {
                 return Local<ElementType>(env,
                     reinterpret_cast<UntaggedElementType*>(
-                        GetObjectArrayElement(env, SafeDereference(env, array), index)));
+                        GetObjectArrayElement(env, SafeDereference(env, this->get()), index)));
                }
 
             void Set(JNIEnv& env, jsize index, const ElementType& value)
                {
-                SetObjectArrayElement(env, SafeDereference(env, array), index, Untag(value));
+                SetObjectArrayElement(env, SafeDereference(env, this->get()), index, Untag(value));
                }
 
             static Local<Array<Object<TheTag>>> New(JNIEnv& env, jsize length, const Object<TheTag>* initialElement = nullptr)
                {
-                return Local<Array<Object<TheTag>>>(env, &NewObjectArray(env, length, Class<TheTag>::Singleton(env), initialElement ? initialElement->Get() : nullptr));
+                return Local<Array<Object<TheTag>>>(env, &NewObjectArray(env, length, *Class<TheTag>::Singleton(env), initialElement ? initialElement->get() : nullptr));
                }
 
             template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
             Global<Array<Object<TheTag>>, Deleter> NewGlobalRef(JNIEnv& env) const
                {
-                return Global<Array<Object<TheTag>>, Deleter>(env, jni::NewGlobalRef(env, array).release());
+                return Global<Array<Object<TheTag>>, Deleter>(env, jni::NewGlobalRef(env, this->get()).release());
                }
 
             template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
             Weak<Array<Object<TheTag>>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
                {
-                return Weak<Array<Object<TheTag>>, Deleter>(env, jni::NewWeakGlobalRef(env, array).release());
+                return Weak<Array<Object<TheTag>>, Deleter>(env, jni::NewWeakGlobalRef(env, this->get()).release());
                }
 
             Local<Array<Object<TheTag>>> NewLocalRef(JNIEnv& env) const
                {
-                return Local<Array<Object<TheTag>>>(env, jni::NewLocalRef(env, array).release());
+                return Local<Array<Object<TheTag>>>(env, jni::NewLocalRef(env, this->get()).release());
                }
       };
 
     template < class T >
     std::vector<T> MakeAnything(ThingToMake<std::vector<T>>, JNIEnv& env, const Array<T>& array)
        {
-        NullCheck(env, array.Get());
+        NullCheck(env, array.get());
         std::vector<T> result(GetArrayLength(env, *array));
         GetArrayRegion(env, *array, 0, result);
         return result;
@@ -196,7 +164,7 @@ namespace jni
     inline
     std::string MakeAnything(ThingToMake<std::string>, JNIEnv& env, const Array<jbyte>& array)
        {
-        NullCheck(env, array.Get());
+        NullCheck(env, array.get());
         std::string result;
         result.resize(GetArrayLength(env, *array));
         GetArrayRegion(env, *array, 0, result.size(), reinterpret_cast<jbyte*>(&result[0]));
