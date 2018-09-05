@@ -9,6 +9,8 @@
 
 // High-level
 
+#include <jni/unique.hpp>
+#include <jni/tagging.hpp>
 #include <jni/class.hpp>
 #include <jni/object.hpp>
 #include <jni/string.hpp>
