@@ -109,10 +109,10 @@ namespace jni
 
             auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
                {
-                return ReleaseLocal(method(*env, AsLvalue(Tag<std::decay_t<Subject>>(*env, *subject)), AsLvalue(Tag<std::decay_t<Args>>(*env, args))...));
+                return ReleaseUnique(method(*env, AsLvalue(Tag<std::decay_t<Subject>>(*env, *subject)), AsLvalue(Tag<std::decay_t<Args>>(*env, args))...));
                };
 
-            return MakeNativeMethod(name, TypeSignature<BaseType<R> (std::decay_t<Args>...)>()(), wrapper);
+            return MakeNativeMethod(name, TypeSignature<RemoveUniqueType<R> (std::decay_t<Args>...)>()(), wrapper);
            }
        };
 
@@ -149,10 +149,10 @@ namespace jni
            {
             auto wrapper = [] (JNIEnv* env, UntaggedType<Subject> subject, UntaggedType<Args>... args)
                {
-                return ReleaseLocal(method(*env, AsLvalue(Tag<std::decay_t<Subject>>(*env, *subject)), AsLvalue(Tag<std::decay_t<Args>>(*env, args))...));
+                return ReleaseUnique(method(*env, AsLvalue(Tag<std::decay_t<Subject>>(*env, *subject)), AsLvalue(Tag<std::decay_t<Args>>(*env, args))...));
                };
 
-            return MakeNativeMethod(name, TypeSignature<BaseType<R> (std::decay_t<Args>...)>()(), wrapper);
+            return MakeNativeMethod(name, TypeSignature<RemoveUniqueType<R> (std::decay_t<Args>...)>()(), wrapper);
            }
        };
 

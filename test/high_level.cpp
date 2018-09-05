@@ -116,21 +116,21 @@ int main()
        {
        };
 
-    testClass.NewGlobalRef(env);
+    jni::NewGlobal(env, testClass);
     assert(calledNewGlobalRef);
 
 
     /// Object
 
     jni::Local<jni::Object<Test>> object { env, objectValue.Ptr() };
-    object.NewGlobalRef(env);
-    object.NewWeakGlobalRef(env);
-    object.NewLocalRef(env);
+    jni::NewGlobal(env, object);
+    jni::NewWeak(env, object);
+    jni::NewLocal(env, object);
 
     jni::Local<jni::String> string { env, stringValue.Ptr() };
-    string.NewGlobalRef(env);
-    string.NewWeakGlobalRef(env);
-    string.NewLocalRef(env);
+    jni::NewGlobal(env, string);
+    jni::NewWeak(env, string);
+    jni::NewLocal(env, string);
 
     jni::Local<jni::Object<Base>> base { jni::Local<jni::Object<Derived>>() };
     base = jni::Local<jni::Object<Derived>>();

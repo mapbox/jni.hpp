@@ -139,23 +139,6 @@ namespace jni
                {
                 CallNonvirtualMethod<void>(env, get(), clazz, method, Untag(args)...);
                }
-
-            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
-            Global<Object<TagType>, Deleter> NewGlobalRef(JNIEnv& env) const
-               {
-                return Global<Object<TagType>, Deleter>(env, reinterpret_cast<typename Object<TagType>::UntaggedType*>(jni::NewGlobalRef(env, get()).release()));
-               }
-
-            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
-            Weak<Object<TagType>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
-               {
-                return Weak<Object<TagType>, Deleter>(env, reinterpret_cast<typename Object<TagType>::UntaggedType*>(jni::NewWeakGlobalRef(env, get()).release()));
-               }
-
-            Local<Object<TagType>> NewLocalRef(JNIEnv& env) const
-               {
-                return Local<Object<TagType>>(env, reinterpret_cast<typename Object<TagType>::UntaggedType*>(jni::NewLocalRef(env, get()).release()));
-               }
        };
 
     template < class OutTagType, class T >
@@ -165,6 +148,6 @@ namespace jni
            {
             ThrowNew(env, FindClass(env, "java/lang/ClassCastException"));
            }
-        return Local<Object<OutTagType>>(env, reinterpret_cast<typename Object<OutTagType>::UntaggedType*>(object.NewLocalRef(env).release()));
+        return Local<Object<OutTagType>>(env, reinterpret_cast<typename Object<OutTagType>::UntaggedType*>(NewLocal(env, object).release()));
        }
    }

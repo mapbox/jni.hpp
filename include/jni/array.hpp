@@ -63,23 +63,6 @@ namespace jni
                {
                 return Local<Array<E>>(env, &NewArray<E>(env, length));
                }
-
-            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
-            Global<Array<E>, Deleter> NewGlobalRef(JNIEnv& env) const
-               {
-                return Global<Array<E>, Deleter>(env, jni::NewGlobalRef(env, this->get()).release());
-               }
-
-            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
-            Weak<Array<E>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
-               {
-                return Weak<Array<E>, Deleter>(env, jni::NewWeakGlobalRef(env, this->get()).release());
-               }
-
-            Local<Array<E>> NewLocalRef(JNIEnv& env) const
-               {
-                return Local<Array<E>>(env, jni::NewLocalRef(env, this->get()).release());
-               }
        };
 
     template < class TheTag >
@@ -124,23 +107,6 @@ namespace jni
             static Local<Array<Object<TheTag>>> New(JNIEnv& env, jsize length, const Object<TheTag>* initialElement = nullptr)
                {
                 return Local<Array<Object<TheTag>>>(env, &NewObjectArray(env, length, *Class<TheTag>::Singleton(env), initialElement ? initialElement->get() : nullptr));
-               }
-
-            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
-            Global<Array<Object<TheTag>>, Deleter> NewGlobalRef(JNIEnv& env) const
-               {
-                return Global<Array<Object<TheTag>>, Deleter>(env, jni::NewGlobalRef(env, this->get()).release());
-               }
-
-            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
-            Weak<Array<Object<TheTag>>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
-               {
-                return Weak<Array<Object<TheTag>>, Deleter>(env, jni::NewWeakGlobalRef(env, this->get()).release());
-               }
-
-            Local<Array<Object<TheTag>>> NewLocalRef(JNIEnv& env) const
-               {
-                return Local<Array<Object<TheTag>>>(env, jni::NewLocalRef(env, this->get()).release());
                }
       };
 

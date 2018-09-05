@@ -128,35 +128,4 @@ namespace jni
 
     template < class T >
     using UntaggedType = decltype(Untag(std::declval<T>()));
-
-
-    template < class T >
-    struct BaseTypeTraits
-       {
-        using Type = T;
-       };
-
-    template < class T >
-    struct BaseTypeTraits< Local<T> >
-       {
-        using Type = T;
-       };
-
-    template < class T >
-    using BaseType = typename BaseTypeTraits<T>::Type;
-
-
-    template < class T >
-    auto ReleaseLocal(T primitive)
-       -> std::enable_if_t< IsPrimitive<T>::value, T >
-       {
-        return primitive;
-       }
-
-    template < class T >
-    auto ReleaseLocal(Local<T>&& t)
-       -> std::enable_if_t< !IsPrimitive<T>::value, decltype(t.release()) >
-       {
-        return t.release();
-       }
    }

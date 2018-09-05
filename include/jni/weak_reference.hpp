@@ -22,7 +22,7 @@ namespace jni
                {
                 static auto& klass = Class<WeakReferenceTag>::Singleton(env);
                 static auto constructor = klass.GetConstructor<Object<>>(env);
-                reference = klass.New(env, constructor, referent).template NewGlobalRef<Deleter>(env);
+                reference = NewGlobal<Deleter>(env, klass.New(env, constructor, referent));
                }
 
             Local<T> get(JNIEnv& env)

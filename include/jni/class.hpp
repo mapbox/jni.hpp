@@ -100,7 +100,7 @@ namespace jni
 
             static const Class& Singleton(JNIEnv& env)
                {
-                static Global<Class, EnvIgnoringDeleter> singleton = Find(env).template NewGlobalRef<EnvIgnoringDeleter>(env);
+                static Global<Class, EnvIgnoringDeleter> singleton = NewGlobal<EnvIgnoringDeleter>(env, Find(env));
                 return singleton;
                }
 
@@ -132,23 +132,6 @@ namespace jni
             StaticMethod<TagType, T> GetStaticMethod(JNIEnv& env, const char* name) const
                {
                 return StaticMethod<TagType, T>(env, *this, name);
-               }
-
-            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
-            Global<Class<TagType>, Deleter> NewGlobalRef(JNIEnv& env) const
-               {
-                return Global<Class<TagType>, Deleter>(env, jni::NewGlobalRef(env, this->get()).release());
-               }
-
-            template < template < RefDeletionMethod > class Deleter = DefaultRefDeleter >
-            Weak<Class<TagType>, Deleter> NewWeakGlobalRef(JNIEnv& env) const
-               {
-                return Weak<Class<TagType>, Deleter>(env, jni::NewWeakGlobalRef(env, this->get()).release());
-               }
-
-            Local<Class<TagType>> NewLocalRef(JNIEnv& env) const
-               {
-                return Local<Class<TagType>>(env, jni::NewLocalRef(env, this->get()).release());
                }
        };
    }

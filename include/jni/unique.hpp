@@ -123,6 +123,47 @@ namespace jni
     using Input = Unique< T, NullDeleter >;
 
 
+    template < class T >
+    struct RemoveUnique
+       {
+        using Type = T;
+       };
+
+    template < class T, class D >
+    struct RemoveUnique< Unique<T, D> >
+       {
+        using Type = T;
+       };
+
+    template < class T >
+    using RemoveUniqueType = typename RemoveUnique<T>::Type;
+
+
+    template < class T >
+    auto ReleaseUnique(T primitive)
+       {
+        return primitive;
+       }
+
+    template < class T, class D >
+    auto ReleaseUnique(Unique<T, D>&& t)
+       {
+        return t.release();
+       }
+
+
+    template < template < RefDeletionMethod > class Deleter, class T >
+    auto NewGlobal(JNIEnv& env, const T& t)
+       {
+        return Global<RemoveUniqueType<T>, Deleter>(env, reinterpret_cast<typename T::UntaggedType*>(jni::NewGlobalRef(env, t.get()).release()));
+       }
+
+    template < class T >
+    auto NewGlobal(JNIEnv& env, const T& t)
+       {
+        return NewGlobal<DefaultRefDeleter>(env, t);
+       }
+
     // Attempt to promote a weak reference to a strong one. Returns an empty result
     // if the weak reference has expired.
     //
@@ -143,6 +184,25 @@ namespace jni
         return NewGlobal<DefaultRefDeleter>(env, t);
        }
 
+
+    template < template < RefDeletionMethod > class Deleter, class T >
+    auto NewWeak(JNIEnv& env, const T& t)
+       {
+        return Weak<RemoveUniqueType<T>, Deleter>(env, reinterpret_cast<typename T::UntaggedType*>(jni::NewWeakGlobalRef(env, t.get()).release()));
+       }
+
+    template < class T >
+    auto NewWeak(JNIEnv& env, const T& t)
+       {
+        return NewWeak<DefaultRefDeleter>(env, t);
+       }
+
+
+    template < class T >
+    auto NewLocal(JNIEnv& env, const T& t)
+       {
+        return Local<RemoveUniqueType<T>>(env, reinterpret_cast<typename T::UntaggedType*>(jni::NewLocalRef(env, t.get()).release()));
+       }
 
     // Attempt to promote a weak reference to a strong one. Returns an empty result
     // if the weak reference has expired.
