@@ -30,6 +30,9 @@ low_level_SOURCES := test/low_level.cpp
 TARGETS += high_level
 high_level_SOURCES := test/high_level.cpp
 
+TARGETS += unicode
+unicode_SOURCES := test/unicode.cpp
+
 TARGETS += libhello.$(dylib)
 libhello.$(dylib)_SOURCES = examples/hello.cpp
 CXXFLAGS__examples/hello.cpp = -Wno-shadow
@@ -44,9 +47,10 @@ libpeer.$(dylib)_LDFLAGS = $(LDFLAGS_shared)
 all: $(TARGETS)
 
 .PHONY: test
-test: low_level high_level
+test: low_level high_level unicode
 	$(BUILD)/low_level
 	$(BUILD)/high_level
+	$(BUILD)/unicode
 
 .PHONY: examples
 examples: libhello.$(dylib) examples/Hello.class libpeer.$(dylib) examples/NativePeer.class
