@@ -10,8 +10,6 @@
 #include <exception>
 #include <type_traits>
 
-#include <iostream>
-
 namespace jni
    {
     template < class M, class Enable = void >
