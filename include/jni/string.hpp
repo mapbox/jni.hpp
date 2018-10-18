@@ -4,9 +4,7 @@
 #include <jni/array.hpp>
 #include <jni/make.hpp>
 #include <jni/npe.hpp>
-
-#include <locale>
-#include <codecvt>
+#include <jni/string_conversion.hpp>
 
 namespace jni
    {
@@ -22,8 +20,7 @@ namespace jni
 
     inline std::string MakeAnything(ThingToMake<std::string>, JNIEnv& env, const String& string)
        {
-        return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>()
-            .to_bytes(Make<std::u16string>(env, string));
+        return convertUTF16ToUTF8(Make<std::u16string>(env, string));
        }
 
     inline Local<String> MakeAnything(ThingToMake<String>, JNIEnv& env, const std::u16string& string)
@@ -33,7 +30,6 @@ namespace jni
 
     inline Local<String> MakeAnything(ThingToMake<String>, JNIEnv& env, const std::string& string)
        {
-        return Make<String>(env, std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>()
-            .from_bytes(string));
+        return Make<String>(env, convertUTF8ToUTF16(string));
        }
    }
