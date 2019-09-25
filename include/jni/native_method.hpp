@@ -249,14 +249,18 @@ namespace jni
         return NativePeerFunctionPointerMethod<FunctionType, method>(name);
        }
 
+    enum class NativePeerNullCheck : bool {
+        Enabled = true,
+        Disabled = false
+    };
 
     /// High-level peer, member function pointer
 
-    template < class M, M >
+    template < class M, M, NativePeerNullCheck peerCheck = NativePeerNullCheck::Disabled>
     class NativePeerMemberFunctionMethod;
 
-    template < class R, class P, class... Args, R (P::*method)(JNIEnv&, Args...) >
-    class NativePeerMemberFunctionMethod< R (P::*)(JNIEnv&, Args...), method >
+    template < class R, class P, class... Args, R (P::*method)(JNIEnv&, Args...), NativePeerNullCheck peerCheck>
+    class NativePeerMemberFunctionMethod< R (P::*)(JNIEnv&, Args...), method, peerCheck>
        {
         private:
             const char* name;
@@ -271,6 +275,11 @@ namespace jni
                {
                 auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
+                    if (peerCheck == NativePeerNullCheck::Enabled and obj.Get(env, field) == 0) {
+                        ThrowNew(env,
+                                 jni::FindClass(env, "java/lang/IllegalStateException"),
+                                 "invalid native peer");
+                    }
                     return (reinterpret_cast<P*>(obj.Get(env, field))->*method)(env, args...);
                    };
 
@@ -278,11 +287,11 @@ namespace jni
                }
        };
 
-    template < class M, M method >
+    template < class M, M method, NativePeerNullCheck peerCheck = NativePeerNullCheck::Disabled>
     auto MakeNativePeerMethod(const char* name,
                               std::enable_if_t< std::is_member_function_pointer<M>::value >* = nullptr)
        {
-        return NativePeerMemberFunctionMethod<M, method>(name);
+        return NativePeerMemberFunctionMethod<M, method, peerCheck>(name);
        }
 
 
