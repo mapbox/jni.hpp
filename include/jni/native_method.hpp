@@ -234,7 +234,10 @@ namespace jni
                {
                 auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
-                    return method(env, *reinterpret_cast<P*>(obj.Get(env, field)), args...);
+                    auto ptr = reinterpret_cast<P*>(obj.Get(env, field));
+                    if (ptr) return method(env, *ptr, args...);
+                    ThrowNew(env, jni::FindClass(env, "java/lang/IllegalStateException"),
+                             "invalid native peer");
                    };
 
                 return MakeNativeMethod(name, wrapper);
@@ -249,14 +252,13 @@ namespace jni
         return NativePeerFunctionPointerMethod<FunctionType, method>(name);
        }
 
-
     /// High-level peer, member function pointer
 
-    template < class M, M >
+    template < class M, M>
     class NativePeerMemberFunctionMethod;
 
-    template < class R, class P, class... Args, R (P::*method)(JNIEnv&, Args...) >
-    class NativePeerMemberFunctionMethod< R (P::*)(JNIEnv&, Args...), method >
+    template < class R, class P, class... Args, R (P::*method)(JNIEnv&, Args...)>
+    class NativePeerMemberFunctionMethod< R (P::*)(JNIEnv&, Args...), method>
        {
         private:
             const char* name;
@@ -271,14 +273,16 @@ namespace jni
                {
                 auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
-                    return (reinterpret_cast<P*>(obj.Get(env, field))->*method)(env, args...);
+                    auto ptr = reinterpret_cast<P*>(obj.Get(env, field));
+                    if (ptr) return (ptr->*method)(env, args...);
+                    ThrowNew(env, jni::FindClass(env, "java/lang/IllegalStateException"),
+                             "invalid native peer");
                    };
-
                 return MakeNativeMethod(name, wrapper);
                }
        };
 
-    template < class M, M method >
+    template < class M, M method>
     auto MakeNativePeerMethod(const char* name,
                               std::enable_if_t< std::is_member_function_pointer<M>::value >* = nullptr)
        {
