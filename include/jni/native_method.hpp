@@ -234,7 +234,10 @@ namespace jni
                {
                 auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
                    {
-                    return method(env, *reinterpret_cast<P*>(obj.Get(env, field)), args...);
+                    auto ptr = reinterpret_cast<P*>(obj.Get(env, field));
+                    if (ptr) return method(env, *ptr, args...);
+                    ThrowNew(env, jni::FindClass(env, "java/lang/IllegalStateException"),
+                             "invalid native peer");
                    };
 
                 return MakeNativeMethod(name, wrapper);
@@ -274,9 +277,7 @@ namespace jni
                     if (ptr) return (ptr->*method)(env, args...);
                     ThrowNew(env, jni::FindClass(env, "java/lang/IllegalStateException"),
                              "invalid native peer");
-
-               };
-
+                   };
                 return MakeNativeMethod(name, wrapper);
                }
        };
