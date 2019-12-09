@@ -628,23 +628,28 @@ namespace jni
        }
 
 
+    namespace {
+      // Some implementations type the parameter as JNIEnv**, others as void**.
+      // See https://bugs.openjdk.java.net/browse/JDK-6569899
+      struct JNIEnvCast
+        {
+          using FunVoid = jint (JavaVM::*)(void**, void*);
+          using FunEnv = jint (JavaVM::*)(JNIEnv**, void*);
+
+          template <typename Fun, typename = std::enable_if_t<std::is_same<Fun, FunVoid>::value>>
+          void** operator()(JNIEnv** env, Fun) noexcept {
+            return reinterpret_cast<void**>(env);
+          }
+
+          template <typename Fun, typename = std::enable_if_t<std::is_same<Fun, FunEnv>::value>>
+          JNIEnv** operator()(JNIEnv** env, Fun) noexcept {
+            return env;
+          }
+        };
+    }
+
     inline UniqueEnv AttachCurrentThread(JavaVM& vm)
        {
-        // Some implementations type the parameter as JNIEnv**, others as void**.
-        // See https://bugs.openjdk.java.net/browse/JDK-6569899
-        struct JNIEnvCast
-          {
-           void** operator()(JNIEnv** env, jint (JavaVM::*)(void**, void*))
-             {
-              return reinterpret_cast<void**>(env);
-             }
-
-           JNIEnv** operator()(JNIEnv** env, jint (JavaVM::*)(JNIEnv**, void*))
-             {
-              return env;
-             }
-          };
-
         JNIEnv* result;
         CheckErrorCode(vm.AttachCurrentThread(JNIEnvCast()(&result, &JavaVM::AttachCurrentThread), nullptr));
         return UniqueEnv(result, JNIEnvDeleter(vm));
@@ -660,6 +665,20 @@ namespace jni
        {
         JNIEnv* env = nullptr;
         CheckErrorCode(vm.GetEnv(reinterpret_cast<void**>(&env), Unwrap(version)));
+        return *env;
+       }
+
+    inline JNIEnv& GetAttachedEnv(JavaVM& vm, version version = jni_version_1_1)
+       {
+        JNIEnv* env = nullptr;
+        auto code = vm.GetEnv(reinterpret_cast<void**>(&env), Unwrap(version));
+
+        if (code == JNI_EDETACHED) {
+            CheckErrorCode(vm.AttachCurrentThread(JNIEnvCast()(&env, &JavaVM::AttachCurrentThread), nullptr));
+        } else {
+            CheckErrorCode(code);
+        }
+
         return *env;
        }
    }
