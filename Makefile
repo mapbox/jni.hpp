@@ -2,10 +2,15 @@ VARIANT ?= android
 BUILD := build/$(VARIANT)
 
 COMPILER := $(shell CXX="${CXX}" misc/compiler.sh)
+COMPILER_MAJOR_VERSION := $(shell CXX="${CXX}" misc/compiler-major-version.sh)
+
 ifeq ($(COMPILER), clang)
-CXXFLAGS_WARNINGS := -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-exit-time-destructors
+	CXXFLAGS_WARNINGS := -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-exit-time-destructors
+	ifeq ($(shell test $(COMPILER_MAJOR_VERSION) -gt 4; echo $$?),0)
+		CXXFLAGS_WARNINGS += -Wno-unused-template
+	endif
 else ifeq ($(COMPILER), gcc)
-CXXFLAGS_WARNINGS := -Wall -Wextra -pedantic -Wno-unused-but-set-variable
+	CXXFLAGS_WARNINGS := -Wall -Wextra -pedantic -Wno-unused-but-set-variable
 endif
 
 CXXFLAGS := $(CXXFLAGS) --std=c++14 -fPIC -Iinclude $(CXXFLAGS_WARNINGS) -Werror
