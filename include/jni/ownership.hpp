@@ -205,14 +205,15 @@ namespace jni
        {
         private:
             JavaVM* vm = nullptr;
-
+            bool detach = true;
+        
         public:
             JNIEnvDeleter() = default;
-            JNIEnvDeleter(JavaVM& v) : vm(&v) {}
+            JNIEnvDeleter(JavaVM& v, bool d = true) : vm(&v), detach{d} {}
 
             void operator()(JNIEnv* p) const
                {
-                if (p)
+                if (p && detach)
                    {
                     assert(vm);
                     vm->DetachCurrentThread();
