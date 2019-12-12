@@ -668,17 +668,17 @@ namespace jni
         return *env;
        }
 
-    inline JNIEnv& GetAttachedEnv(JavaVM& vm, version version = jni_version_1_1)
+    inline UniqueEnv GetAttachedEnv(JavaVM& vm, version version = jni_version_1_1)
        {
         JNIEnv* env = nullptr;
         auto code = vm.GetEnv(reinterpret_cast<void**>(&env), Unwrap(version));
-
-        if (code == JNI_EDETACHED) {
-            CheckErrorCode(vm.AttachCurrentThread(JNIEnvCast()(&env, &JavaVM::AttachCurrentThread), nullptr));
-        } else {
-            CheckErrorCode(code);
-        }
-
-        return *env;
+        switch (code) 
+           {
+            case JNI_OK:        return UniqueEnv(env,JNIEnvDeleter(vm, false));
+            case JNI_EDETACHED: return AttachCurrentThread(vm);
+            default:            
+               CheckErrorCode(code); 
+               return nullptr;
+           }
        }
    }
