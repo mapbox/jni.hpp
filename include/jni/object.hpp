@@ -48,12 +48,12 @@ namespace jni
             using SuperType = typename TagTraits<TheTag>::SuperType;
             using UntaggedType = typename TagTraits<TheTag>::UntaggedType;
 
-        protected:
-            explicit Object(std::nullptr_t = nullptr)
-               {}
-
             explicit Object(UntaggedType* p)
                : SuperType(p)
+               {}
+
+        protected:
+            explicit Object(std::nullptr_t = nullptr)
                {}
 
             Object(const Object&) = delete;
