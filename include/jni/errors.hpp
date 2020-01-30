@@ -66,7 +66,10 @@ namespace jni
 
     inline void CheckJavaException(JNIEnv& env)
        {
-        if (env.ExceptionCheck()) throw PendingJavaException();
+        if (env.ExceptionCheck()) {
+            env.ExceptionDescribe();
+            throw PendingJavaException();
+        }
        }
 
     inline void CheckJavaExceptionThenErrorCode(JNIEnv& env, jint err)
