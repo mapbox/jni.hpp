@@ -825,7 +825,7 @@ struct JNIEnv_ {
         return functions->ExceptionOccurred(this);
     }
     void ExceptionDescribe() {
-        functions->ExceptionDescribe(this);
+        if (functions->ExceptionDescribe) functions->ExceptionDescribe(this);
     }
     void ExceptionClear() {
         functions->ExceptionClear(this);
