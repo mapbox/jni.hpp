@@ -72,7 +72,7 @@ namespace jni
 
         ::jsize Unwrap(jsize s) const
            {
-            if (s > std::numeric_limits<::jsize>::max())
+            if (s > jsize(std::numeric_limits<::jsize>::max()))
                 throw std::range_error("jsize > max");
             return static_cast<::jsize>(s);
            }
