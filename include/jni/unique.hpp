@@ -47,12 +47,12 @@ namespace jni
             using Base = T;
             using UntaggedType = typename T::UntaggedType;
 
-            explicit Unique(std::nullptr_t ptr = nullptr)
-               : T(ptr),
+            explicit Unique(std::nullptr_t ptr_ = nullptr)
+               : T(ptr_),
                  deleter() {}
 
-            explicit Unique(JNIEnv& env, UntaggedType* ptr)
-               : T(ptr),
+            explicit Unique(JNIEnv& env, UntaggedType* ptr_)
+               : T(ptr_),
                  deleter(env) {}
 
             Unique(Unique&& other)
@@ -76,10 +76,10 @@ namespace jni
                 return *this;
                }
 
-            void reset(UntaggedType* ptr = nullptr)
+            void reset(UntaggedType* ptr_ = nullptr)
                {
                 UntaggedType* current = this->get();
-                T::reset(ptr);
+                T::reset(ptr_);
                 if (current)
                    {
                     get_deleter()(current);

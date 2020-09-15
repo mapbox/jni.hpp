@@ -4,6 +4,8 @@ BUILD := build/$(VARIANT)
 COMPILER := $(shell CXX="${CXX}" misc/compiler.sh)
 COMPILER_MAJOR_VERSION := $(shell CXX="${CXX}" misc/compiler-major-version.sh)
 
+$(info Compiler: "${COMPILER}" major version: "${COMPILER_MAJOR_VERSION}")
+
 ifeq ($(COMPILER), clang)
 	CXXFLAGS_WARNINGS := -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-exit-time-destructors
 	ifeq ($(shell test $(COMPILER_MAJOR_VERSION) -gt 4; echo $$?),0)
