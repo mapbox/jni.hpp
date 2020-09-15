@@ -60,7 +60,10 @@ namespace jni
     template < class R >
     R CheckJavaException(JNIEnv& env, R&& r)
        {
-        if (env.ExceptionCheck()) throw PendingJavaException();
+        if (env.ExceptionCheck()) {
+            env.ExceptionDescribe();
+            throw PendingJavaException();
+        }
         return std::move(r);
        }
 
