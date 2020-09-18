@@ -371,6 +371,22 @@ namespace jni
             methods.template operator()<Peer>(field)...);
        }
 
+    template < class Peer, class TagType, class Initializer, class... Methods >
+    void RegisterNativePeer(JNIEnv& env, const Class<TagType>& clazz, const char* fieldName,
+                            Initializer initialize,
+                            const char* initializeMethodName,
+                            Methods&&... methods)
+       {
+        static Field<TagType, jlong> field { env, clazz, fieldName };
+
+        using InitializerMethodType = typename NativeMethodTraits<Initializer>::Type;
+        NativePeerHelper<Peer, TagType, InitializerMethodType> helper;
+
+        RegisterNatives(env, *clazz,
+                helper.MakeInitializer(field, initializeMethodName, initialize),
+                methods.template operator()<Peer>(field)...);
+       }
+
      // Like std::make_unique, but with non-universal reference arguments, so it can be
      // explicitly specialized (jni::MakePeer<Peer, jni::jboolean, ...>).
      template < class Peer, class... Args >
