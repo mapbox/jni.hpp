@@ -669,15 +669,15 @@ int main()
 
         auto voidTrue = jni::MakeNativeMethod("voidTrue", [] (JNIEnv&, ObjectOrClass&, jni::jboolean b) { assert( b); });
         assert(voidTrue.signature == std::string("(Z)V"));
-        reinterpret_cast<jboolean (*)(JNIEnv*, jobject, jboolean)>(voidTrue.fnPtr)(&env, nullptr, JNI_TRUE);
+        reinterpret_cast<void (*)(JNIEnv*, jobject, jboolean)>(voidTrue.fnPtr)(&env, nullptr, JNI_TRUE);
 
         auto voidFalse = jni::MakeNativeMethod("voidFalse", [] (JNIEnv&, ObjectOrClass&, jni::jboolean b) { assert(!b); });
         assert(voidFalse.signature == std::string("(Z)V"));
-        reinterpret_cast<jboolean (*)(JNIEnv*, jobject, jboolean)>(voidFalse.fnPtr)(&env, nullptr, JNI_FALSE);
+        reinterpret_cast<void (*)(JNIEnv*, jobject, jboolean)>(voidFalse.fnPtr)(&env, nullptr, JNI_FALSE);
 
         auto voidObject = jni::MakeNativeMethod("voidObject", [] (JNIEnv&, ObjectOrClass&, jni::Object<Test>&) {});
         assert(voidObject.signature == std::string("(Lmapbox/com/Test;)V"));
-        reinterpret_cast<jboolean (*)(JNIEnv*, jobject, jobject)>(voidObject.fnPtr)(&env, nullptr, nullptr);
+        reinterpret_cast<void (*)(JNIEnv*, jobject, jobject)>(voidObject.fnPtr)(&env, nullptr, nullptr);
 
         auto objectVoid = jni::MakeNativeMethod("objectVoid", [] (JNIEnv&, ObjectOrClass&) -> jni::Local<jni::Object<Test>> { return jni::Local<jni::Object<Test>>(); });
         assert(objectVoid.signature == std::string("()Lmapbox/com/Test;"));
