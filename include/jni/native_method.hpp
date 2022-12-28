@@ -282,6 +282,31 @@ namespace jni
                }
        };
 
+    template < class R, class P, class... Args, R (P::*method)(JNIEnv&, Args...) const>
+    class NativePeerMemberFunctionMethod< R (P::*)(JNIEnv&, Args...) const, method>
+       {
+        private:
+            const char* name;
+
+        public:
+            NativePeerMemberFunctionMethod(const char* n)
+               : name(n)
+               {}
+
+            template < class Peer, class TagType, class = std::enable_if_t< std::is_same<P, Peer>::value > >
+            auto operator()(const Field<TagType, jlong>& field)
+               {
+                auto wrapper = [field] (JNIEnv& env, Object<TagType>& obj, Args... args)
+                   {
+                    auto ptr = reinterpret_cast<P*>(obj.Get(env, field));
+                    if (ptr) return (ptr->*method)(env, args...);
+                    ThrowNew(env, jni::FindClass(env, "java/lang/IllegalStateException"),
+                             "invalid native peer");
+                   };
+                return MakeNativeMethod(name, wrapper);
+               }
+       };
+
     template < class M, M method>
     auto MakeNativePeerMethod(const char* name,
                               std::enable_if_t< std::is_member_function_pointer<M>::value >* = nullptr)
