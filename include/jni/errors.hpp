@@ -117,9 +117,5 @@ namespace jni
            {
             env.ThrowNew(JavaErrorClass(env), e.what());
            }
-        catch (...)
-           {
-            env.ThrowNew(JavaErrorClass(env), "unknown native exception");
-           }
        }
    }
