@@ -30,5 +30,5 @@ namespace jni
     template < class B1, class... Bn > struct Conjunction<B1, Bn...>
         : std::conditional_t<bool(B1::value), Conjunction<Bn...>, B1> {};
 
-    template < class T > T& AsLvalue(T&& x) { return x; }
+    template < class T > T& AsLvalue(T&& x) { return static_cast<T&>(x); }
    }
