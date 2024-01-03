@@ -52,15 +52,15 @@ namespace jni
 
         auto wrapper = [] (JNIEnv* env, auto... args)
            {
-            try
-               {
+            // try
+            //    {
                 return method(env, args...);
-               }
-            catch (...)
-               {
-                ThrowJavaError(*env, std::current_exception());
-                return ResultType();
-               }
+            //    }
+            // catch (...)
+            //    {
+            //     ThrowJavaError(*env, std::current_exception());
+            //     return ResultType();
+            //    }
            };
 
         return JNINativeMethod< FunctionType > { name, sig, wrapper };
@@ -77,15 +77,15 @@ namespace jni
 
         auto wrapper = [] (JNIEnv* env, auto... args)
            {
-            try
-               {
+            // try
+            //    {
                 return method(env, args...);
-               }
-            catch (...)
-               {
-                ThrowJavaError(*env, std::current_exception());
-                return ResultType();
-               }
+            //    }
+            // catch (...)
+            //    {
+            //     ThrowJavaError(*env, std::current_exception());
+            //     return ResultType();
+            //    }
            };
 
         return JNINativeMethod< FunctionType > { name, sig, wrapper };
